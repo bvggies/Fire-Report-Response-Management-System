@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Flame, MapPin, Clock, AlertCircle, CheckCircle, Loader, XCircle, Copy } from 'lucide-react'
 import { BackgroundVectors } from '@/components/background-vectors'
@@ -81,7 +81,15 @@ export default function TrackPage() {
       toast.error('Error loading incident. Please try again.')
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (incidentId) {
+      fetchIncident(incidentId)
+    } else {
+      setLoading(false)
+    }
+  }, [incidentId, fetchIncident])
 
   const handleTrack = () => {
     if (trackingId) {
