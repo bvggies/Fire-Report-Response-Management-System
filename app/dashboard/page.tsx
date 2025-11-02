@@ -358,8 +358,7 @@ export default function DashboardPage() {
                         </ResponsiveContainer>
                       </motion.div>
                     )}
-                    </div>
-                  </>
+                  </div>
                 )}
 
                 {/* Additional Admin Stats */}
