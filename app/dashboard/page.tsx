@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Flame, LogOut, Map, Filter, Search, AlertCircle, CheckCircle, BarChart3, TrendingUp, Users, Building2, Clock } from 'lucide-react'
+import { Flame, LogOut, Map, Filter, Search, AlertCircle, CheckCircle, BarChart3, TrendingUp, Users, Building2, Clock, Volume2, VolumeX } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import { formatDate } from '@/lib/utils'
 import { motion } from 'framer-motion'
@@ -55,12 +55,72 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [severityFilter, setSeverityFilter] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [lastIncidentCount, setLastIncidentCount] = useState(0)
+  const [isBeeping, setIsBeeping] = useState(false)
+  const [beepEnabled, setBeepEnabled] = useState(true)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login')
     }
   }, [status, router])
+
+  // Play beep sound
+  const playBeep = useCallback(() => {
+    if (!beepEnabled || isBeeping) return
+
+    try {
+      setIsBeeping(true)
+      // Create beep sound using Web Audio API
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      // Set beep properties (800Hz tone, 0.3 seconds)
+      oscillator.frequency.value = 800
+      oscillator.type = 'sine'
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + 0.3)
+
+      // Play beep 3 times with delays
+      setTimeout(() => {
+        const oscillator2 = audioContext.createOscillator()
+        const gainNode2 = audioContext.createGain()
+        oscillator2.connect(gainNode2)
+        gainNode2.connect(audioContext.destination)
+        oscillator2.frequency.value = 800
+        oscillator2.type = 'sine'
+        gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime)
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+        oscillator2.start(audioContext.currentTime + 0.4)
+        oscillator2.stop(audioContext.currentTime + 0.7)
+
+        setTimeout(() => {
+          const oscillator3 = audioContext.createOscillator()
+          const gainNode3 = audioContext.createGain()
+          oscillator3.connect(gainNode3)
+          gainNode3.connect(audioContext.destination)
+          oscillator3.frequency.value = 800
+          oscillator3.type = 'sine'
+          gainNode3.gain.setValueAtTime(0.3, audioContext.currentTime)
+          gainNode3.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+          oscillator3.start(audioContext.currentTime + 0.8)
+          oscillator3.stop(audioContext.currentTime + 1.1)
+          
+          setTimeout(() => setIsBeeping(false), 1500)
+        }, 400)
+      }, 400)
+    } catch (error) {
+      console.error('Error playing beep:', error)
+      setIsBeeping(false)
+    }
+  }, [beepEnabled, isBeeping])
 
   const fetchIncidents = useCallback(async () => {
     try {
@@ -71,6 +131,23 @@ export default function DashboardPage() {
       const response = await fetch(`/api/incidents?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
+        
+        // Check for new incidents (only if we're monitoring and not filtering)
+        const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
+        if (isAdmin && beepEnabled && !statusFilter && !severityFilter) {
+          const currentCount = data.length
+          if (lastIncidentCount > 0 && currentCount > lastIncidentCount) {
+            // New incident detected!
+            const newIncidents = currentCount - lastIncidentCount
+            playBeep()
+            toast.success(`🚨 ${newIncidents} new incident${newIncidents > 1 ? 's' : ''} reported!`, {
+              duration: 5000,
+              icon: '🚨',
+            })
+          }
+          setLastIncidentCount(currentCount)
+        }
+        
         setIncidents(data)
       }
     } catch (error) {
@@ -79,7 +156,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, severityFilter])
+  }, [statusFilter, severityFilter, lastIncidentCount, beepEnabled, session, playBeep])
 
   const fetchAdminStats = useCallback(async () => {
     try {
@@ -109,6 +186,27 @@ export default function DashboardPage() {
       }
     }
   }, [session, fetchIncidents, fetchAdminStats])
+
+  // Poll for new incidents every 5 seconds (only for admins)
+  useEffect(() => {
+    const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
+    
+    if (!isAdmin || !session) return
+
+    // Initial count setup after first load
+    if (incidents.length > 0 && lastIncidentCount === 0) {
+      setLastIncidentCount(incidents.length)
+    }
+
+    // Poll every 5 seconds for new incidents
+    const interval = setInterval(() => {
+      if (!statusFilter && !severityFilter) {
+        fetchIncidents()
+      }
+    }, 5000) // Check every 5 seconds
+
+    return () => clearInterval(interval)
+  }, [session, incidents.length, lastIncidentCount, statusFilter, severityFilter, fetchIncidents])
 
   const updateStatus = useCallback(async (incidentId: string, newStatus: string) => {
     try {
