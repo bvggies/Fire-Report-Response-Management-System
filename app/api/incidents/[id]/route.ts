@@ -5,11 +5,20 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+    
+    if (!id || !id.trim()) {
+      return NextResponse.json(
+        { message: 'Incident ID is required' },
+        { status: 400 }
+      )
+    }
+
     const incident = await prisma.incident.findUnique({
-      where: { id: params.id },
+      where: { id: id.trim() },
       include: {
         reporter: {
           select: {
@@ -63,14 +72,23 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+    
+    if (!id || !id.trim()) {
+      return NextResponse.json(
+        { message: 'Incident ID is required' },
+        { status: 400 }
+      )
+    }
+
     const body = await request.json()
     const { status, notes } = body
 
     const incident = await prisma.incident.update({
-      where: { id: params.id },
+      where: { id: id.trim() },
       data: {
         status,
         resolvedAt: status === 'RESOLVED' ? new Date() : null,

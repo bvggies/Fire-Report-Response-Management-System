@@ -66,19 +66,46 @@ export default function TrackPage() {
   const [trackingId, setTrackingId] = useState(incidentId || '')
 
   const fetchIncident = useCallback(async (id: string) => {
+    if (!id || !id.trim()) {
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
+    setIncident(null) // Clear previous incident
+    
     try {
-      const response = await fetch(`/api/incidents/${id}`)
-      if (response.ok) {
-        const data = await response.json()
+      const response = await fetch(`/api/incidents/${id.trim()}`)
+      
+      if (!response.ok) {
+        let errorMessage = 'Incident not found. Please check your Incident ID.'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorData.details || errorMessage
+        } catch {
+          // If response is not JSON, use default message
+        }
+        
+        toast.error(errorMessage)
+        setIncident(null)
+        setLoading(false)
+        return
+      }
+
+      const data = await response.json()
+      if (data) {
         setIncident(data)
+        setLoading(false)
       } else {
-        toast.error('Incident not found. Please check your Incident ID.')
+        toast.error('Incident not found.')
+        setIncident(null)
         setLoading(false)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching incident:', error)
-      toast.error('Error loading incident. Please try again.')
+      const errorMessage = error?.message || 'Network error. Please check your connection and try again.'
+      toast.error(errorMessage)
+      setIncident(null)
       setLoading(false)
     }
   }, [])

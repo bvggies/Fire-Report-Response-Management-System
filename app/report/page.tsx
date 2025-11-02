@@ -129,6 +129,7 @@ export default function ReportPage() {
 
   const onSubmit = async (data: ReportForm) => {
     setIsSubmitting(true)
+    
     try {
       const response = await fetch('/api/incidents', {
         method: 'POST',
@@ -140,22 +141,64 @@ export default function ReportPage() {
         }),
       })
 
+      // Handle response
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || errorData.details || 'Failed to submit report')
+        let errorMessage = 'Failed to submit report. Please try again.'
+        let errorDetails = ''
+        
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorMessage
+          errorDetails = errorData.details || ''
+        } catch (parseError) {
+          // If response is not JSON
+          errorMessage = `Server error: ${response.status} ${response.statusText}`
+        }
+        
+        // Set submitting to false before showing error
+        setIsSubmitting(false)
+        
+        toast.error(errorMessage)
+        
+        // Show additional details if available
+        if (errorDetails) {
+          console.error('Error details:', errorDetails)
+          if (errorDetails.includes('schema') || errorDetails.includes('does not exist')) {
+            toast.error('Database not set up. Please contact administrator.', { duration: 8000 })
+          }
+        }
+        
+        return
       }
 
-      const result = await response.json()
-      const incidentId = result.id
+      // Parse successful response
+      let result
+      try {
+        result = await response.json()
+      } catch (parseError) {
+        setIsSubmitting(false)
+        toast.error('Received invalid response from server. Please try again.')
+        console.error('JSON parse error:', parseError)
+        return
+      }
+
+      const incidentId = result?.id
       
-      // Show success with ID
+      if (!incidentId) {
+        setIsSubmitting(false)
+        toast.error('Report submitted but could not get incident ID. Please contact support.')
+        return
+      }
+      
+      // Show success message
       toast.success(
-        `Report submitted successfully! Redirecting...`,
+        `Report submitted successfully! Incident ID: ${incidentId.slice(0, 8)}... Redirecting...`,
         { duration: 2000 }
       )
       
       // Redirect based on user role
       setTimeout(() => {
+        setIsSubmitting(false)
         if (session?.user?.role === 'USER') {
           // Redirect logged-in users to their reports page
           router.push('/dashboard/my-reports')
@@ -164,17 +207,19 @@ export default function ReportPage() {
           router.push(`/track?id=${incidentId}`)
         }
       }, 2000)
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Failed to submit report. Please try again.'
-      toast.error(errorMessage)
-      console.error('Report submission error:', error)
       
-      // If database schema error, show helpful message
-      if (errorMessage.includes('schema') || errorMessage.includes('does not exist')) {
-        toast.error('Database not set up. Please contact administrator.', { duration: 8000 })
-      }
-    } finally {
+    } catch (error: any) {
       setIsSubmitting(false)
+      
+      // Network errors
+      if (error?.name === 'TypeError' && error?.message?.includes('fetch')) {
+        toast.error('Network error. Please check your connection and try again.', { duration: 5000 })
+      } else {
+        const errorMessage = error?.message || 'Failed to submit report. Please try again.'
+        toast.error(errorMessage)
+      }
+      
+      console.error('Report submission error:', error)
     }
   }
 
