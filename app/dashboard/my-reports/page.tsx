@@ -278,13 +278,14 @@ export default function MyReportsPage() {
                   </LineChart>
                 </ResponsiveContainer>
               </motion.div>
-              {stats.bySeverity && stats.bySeverity.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-lg shadow-md p-4 md:p-6 border border-gray-200"
-                >
-                  <h2 className="text-lg md:text-xl font-bold mb-4">🎯 Reports by Severity</h2>
+            )}
+            {stats.bySeverity && stats.bySeverity.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-lg shadow-md p-4 md:p-6 border border-gray-200"
+              >
+                <h2 className="text-lg md:text-xl font-bold mb-4">🎯 Reports by Severity</h2>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
@@ -305,9 +306,8 @@ export default function MyReportsPage() {
                   </PieChart>
                 </ResponsiveContainer>
               </motion.div>
-              )}
-            </div>
-          </>
+            )}
+          </div>
         )}
 
         {/* Additional Stats */}
