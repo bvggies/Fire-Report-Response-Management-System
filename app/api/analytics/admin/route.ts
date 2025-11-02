@@ -47,6 +47,9 @@ export async function GET() {
       _count: {
         id: true,
       },
+    }).catch((err) => {
+      console.error('Error grouping by status:', err)
+      return []
     })
 
     const byStatus = byStatusRaw.map((item) => ({
@@ -60,6 +63,9 @@ export async function GET() {
       _count: {
         id: true,
       },
+    }).catch((err) => {
+      console.error('Error grouping by severity:', err)
+      return []
     })
 
     const bySeverity = bySeverityRaw.map((item) => ({
@@ -209,26 +215,54 @@ export async function GET() {
     })
   } catch (error: any) {
     console.error('Error fetching admin analytics:', error)
+    console.error('Error stack:', error.stack)
+    console.error('Error code:', error.code)
     
-    // Return empty/default stats instead of error to prevent UI failures
-    return NextResponse.json({
-      totalIncidents: 0,
-      totalUsers: 0,
-      totalPersonnel: 0,
-      totalStations: 0,
-      recentIncidents: 0,
-      recentUsers: 0,
-      byStatus: [],
-      bySeverity: [],
-      byRole: [],
-      monthlyChart: [],
-      topReporters: [],
-      resolutionRate: 0,
-      avgResolutionHours: 0,
-      activeCount: 0,
-      resolvedCount: 0,
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-    })
+    // Try to get at least basic counts even if other queries fail
+    try {
+      const fallbackTotalIncidents = await prisma.incident.count().catch(() => 0)
+      const fallbackTotalUsers = await prisma.user.count().catch(() => 0)
+      
+      return NextResponse.json({
+        totalIncidents: fallbackTotalIncidents,
+        totalUsers: fallbackTotalUsers,
+        totalPersonnel: 0,
+        totalStations: 0,
+        recentIncidents: 0,
+        recentUsers: 0,
+        byStatus: [],
+        bySeverity: [],
+        byRole: [],
+        monthlyChart: [],
+        topReporters: [],
+        resolutionRate: 0,
+        avgResolutionHours: 0,
+        activeCount: 0,
+        resolvedCount: 0,
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      })
+    } catch (fallbackError) {
+      // Complete failure - return empty stats
+      console.error('Fallback query also failed:', fallbackError)
+      return NextResponse.json({
+        totalIncidents: 0,
+        totalUsers: 0,
+        totalPersonnel: 0,
+        totalStations: 0,
+        recentIncidents: 0,
+        recentUsers: 0,
+        byStatus: [],
+        bySeverity: [],
+        byRole: [],
+        monthlyChart: [],
+        topReporters: [],
+        resolutionRate: 0,
+        avgResolutionHours: 0,
+        activeCount: 0,
+        resolvedCount: 0,
+        error: process.env.NODE_ENV === 'development' ? `Primary: ${error.message}, Fallback: ${fallbackError}` : undefined,
+      })
+    }
   }
 }
 

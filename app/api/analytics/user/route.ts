@@ -42,6 +42,9 @@ export async function GET() {
       _count: {
         id: true,
       },
+    }).catch((err) => {
+      console.error('Error grouping by status:', err)
+      return []
     })
 
     const byStatus = byStatusRaw.map((item) => ({
@@ -56,6 +59,9 @@ export async function GET() {
       _count: {
         id: true,
       },
+    }).catch((err) => {
+      console.error('Error grouping by severity:', err)
+      return []
     })
 
     const bySeverity = bySeverityRaw.map((item) => ({
@@ -146,8 +152,34 @@ export async function GET() {
     })
   } catch (error: any) {
     console.error('Error fetching user analytics:', error)
+    console.error('Error stack:', error.stack)
+    console.error('Error code:', error.code)
+    console.error('User ID:', session?.user?.id)
     
-    // Return empty/default stats instead of error to prevent UI failures
+    // Try to get at least basic count even if other queries fail
+    try {
+      if (session?.user?.id) {
+        const fallbackTotalReports = await prisma.incident.count({
+          where: { reporterId: session.user.id },
+        }).catch(() => 0)
+        
+        return NextResponse.json({
+          totalReports: fallbackTotalReports,
+          recentReports: 0,
+          resolvedCount: 0,
+          activeCount: 0,
+          byStatus: [],
+          bySeverity: [],
+          monthlyChart: [],
+          avgResolutionHours: 0,
+          error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        })
+      }
+    } catch (fallbackError) {
+      console.error('Fallback query also failed:', fallbackError)
+    }
+    
+    // Complete failure - return empty stats
     return NextResponse.json({
       totalReports: 0,
       recentReports: 0,
