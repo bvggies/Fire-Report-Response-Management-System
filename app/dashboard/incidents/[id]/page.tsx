@@ -63,9 +63,15 @@ export default function IncidentDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [session, router])
 
-  const updateStatus = async (newStatus: string) => {
+  useEffect(() => {
+    if (params.id) {
+      fetchIncident(params.id as string)
+    }
+  }, [params.id, fetchIncident])
+
+  const updateStatus = useCallback(async (newStatus: string) => {
     if (!incident) return
 
     try {
@@ -77,7 +83,9 @@ export default function IncidentDetailPage() {
 
       if (response.ok) {
         toast.success('Status updated successfully')
-        fetchIncident(incident.id)
+        if (incident) {
+          fetchIncident(incident.id)
+        }
       } else {
         toast.error('Failed to update status')
       }
@@ -85,7 +93,7 @@ export default function IncidentDetailPage() {
       console.error('Error updating status:', error)
       toast.error('Failed to update status')
     }
-  }
+  }, [incident, fetchIncident])
 
   if (loading) {
     return (
