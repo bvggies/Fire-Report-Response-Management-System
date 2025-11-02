@@ -110,12 +110,12 @@ export default function DashboardPage() {
         const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
         if (isAdmin && beepEnabled && !statusFilter && !severityFilter) {
           // Track incidents by ID for better detection
-          const currentIncidentIds = new Set(data.map((inc: Incident) => inc.id))
+          const currentIncidentIds = new Set<string>(data.map((inc: Incident) => inc.id))
           
           if (lastIncidentIds.size > 0) {
             // Find new incidents (IDs that weren't in the last set)
-            const newIncidentIds = Array.from(currentIncidentIds).filter(
-              (id: string) => !lastIncidentIds.has(id)
+            const newIncidentIds = Array.from<string>(currentIncidentIds).filter(
+              (id) => !lastIncidentIds.has(id)
             )
             
             if (newIncidentIds.length > 0) {
@@ -131,7 +131,7 @@ export default function DashboardPage() {
           setLastIncidentIds(currentIncidentIds)
         } else if (isAdmin && incidents.length === 0 && data.length > 0) {
           // First load - initialize the set
-          setLastIncidentIds(new Set(data.map((inc: Incident) => inc.id)))
+          setLastIncidentIds(new Set<string>(data.map((inc: Incident) => inc.id)))
         }
         
         setIncidents(data)
@@ -189,7 +189,7 @@ export default function DashboardPage() {
 
     // Initial setup after first load - wait for incidents to be loaded
     if (incidents.length > 0 && lastIncidentIds.size === 0) {
-      setLastIncidentIds(new Set(incidents.map(inc => inc.id)))
+      setLastIncidentIds(new Set<string>(incidents.map(inc => inc.id)))
     }
 
     // Poll every 2 seconds for new incidents (more frequent for immediate detection)
