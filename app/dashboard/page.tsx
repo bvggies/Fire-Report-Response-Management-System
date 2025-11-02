@@ -115,7 +115,7 @@ export default function DashboardPage() {
           if (lastIncidentIds.size > 0) {
             // Find new incidents (IDs that weren't in the last set)
             const newIncidentIds = Array.from(currentIncidentIds).filter(
-              id => !lastIncidentIds.has(id)
+              (id: string) => !lastIncidentIds.has(id)
             )
             
             if (newIncidentIds.length > 0) {
