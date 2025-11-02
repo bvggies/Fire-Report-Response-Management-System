@@ -433,7 +433,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs md:text-sm text-purple-700 font-medium">Stations</p>
-                        <p className="text-2xl md:text-4xl font-bold text-purple-900 mt-1 md:mt-2">{stats.totalStations}</p>
+                        <p className="text-2xl md:text-4xl font-bold text-purple-900 mt-1 md:mt-2">{stats.totalStations ?? 0}</p>
                       </div>
                       <Building2 className="w-10 h-10 md:w-14 md:h-14 text-purple-600 opacity-40" />
                     </div>

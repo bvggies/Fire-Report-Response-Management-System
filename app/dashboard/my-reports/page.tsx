@@ -215,7 +215,7 @@ export default function MyReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs md:text-sm text-red-700 font-medium">Total Reports</p>
-                  <p className="text-2xl md:text-4xl font-bold text-red-900 mt-1 md:mt-2">{stats.totalReports}</p>
+                  <p className="text-2xl md:text-4xl font-bold text-red-900 mt-1 md:mt-2">{stats.totalReports ?? 0}</p>
                 </div>
                 <FileText className="w-10 h-10 md:w-14 md:h-14 text-red-600 opacity-40" />
               </div>
@@ -229,7 +229,7 @@ export default function MyReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs md:text-sm text-orange-700 font-medium">Active</p>
-                  <p className="text-2xl md:text-4xl font-bold text-orange-900 mt-1 md:mt-2">{stats.activeCount}</p>
+                  <p className="text-2xl md:text-4xl font-bold text-orange-900 mt-1 md:mt-2">{stats.activeCount ?? 0}</p>
                 </div>
                 <AlertCircle className="w-10 h-10 md:w-14 md:h-14 text-orange-600 opacity-40" />
               </div>
@@ -243,7 +243,7 @@ export default function MyReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs md:text-sm text-green-700 font-medium">Resolved</p>
-                  <p className="text-2xl md:text-4xl font-bold text-green-900 mt-1 md:mt-2">{stats.resolvedCount}</p>
+                  <p className="text-2xl md:text-4xl font-bold text-green-900 mt-1 md:mt-2">{stats.resolvedCount ?? 0}</p>
                 </div>
                 <CheckCircle2 className="w-10 h-10 md:w-14 md:h-14 text-green-600 opacity-40" />
               </div>
@@ -257,7 +257,7 @@ export default function MyReportsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs md:text-sm text-blue-700 font-medium">Recent (7d)</p>
-                  <p className="text-2xl md:text-4xl font-bold text-blue-900 mt-1 md:mt-2">{stats.recentReports}</p>
+                  <p className="text-2xl md:text-4xl font-bold text-blue-900 mt-1 md:mt-2">{stats.recentReports ?? 0}</p>
                 </div>
                 <TrendingUp className="w-10 h-10 md:w-14 md:h-14 text-blue-600 opacity-40" />
               </div>
