@@ -144,12 +144,21 @@ export async function GET() {
       monthlyChart,
       avgResolutionHours: Math.round(avgResolutionHours * 10) / 10,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching user analytics:', error)
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    )
+    
+    // Return empty/default stats instead of error to prevent UI failures
+    return NextResponse.json({
+      totalReports: 0,
+      recentReports: 0,
+      resolvedCount: 0,
+      activeCount: 0,
+      byStatus: [],
+      bySeverity: [],
+      monthlyChart: [],
+      avgResolutionHours: 0,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    })
   }
 }
 

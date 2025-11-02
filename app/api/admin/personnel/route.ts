@@ -9,7 +9,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session || session.user?.role !== 'SUPER_ADMIN') {
+    if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPER_ADMIN')) {
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 403 }
@@ -30,6 +30,77 @@ export async function GET() {
     console.error('Error fetching personnel:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+// Create personnel
+export async function POST(request: Request) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session || (session.user?.role !== 'ADMIN' && session.user?.role !== 'SUPER_ADMIN')) {
+      return NextResponse.json(
+        { message: 'Unauthorized' },
+        { status: 403 }
+      )
+    }
+
+    const body = await request.json()
+    const { name, email, phone, badgeNumber, rank, fireStationId } = body
+
+    // Validate required fields
+    if (!name || !email || !phone || !badgeNumber || !rank || !fireStationId) {
+      return NextResponse.json(
+        { message: 'All fields are required' },
+        { status: 400 }
+      )
+    }
+
+    // Check if email already exists
+    const existingPersonnel = await prisma.personnel.findUnique({
+      where: { email },
+    })
+
+    if (existingPersonnel) {
+      return NextResponse.json(
+        { message: 'Email already in use' },
+        { status: 400 }
+      )
+    }
+
+    // Check if badge number already exists
+    const existingBadge = await prisma.personnel.findUnique({
+      where: { badgeNumber },
+    })
+
+    if (existingBadge) {
+      return NextResponse.json(
+        { message: 'Badge number already in use' },
+        { status: 400 }
+      )
+    }
+
+    const newPersonnel = await prisma.personnel.create({
+      data: {
+        name,
+        email,
+        phone,
+        badgeNumber,
+        rank,
+        fireStationId,
+      },
+      include: {
+        fireStation: true,
+      },
+    })
+
+    return NextResponse.json(newPersonnel, { status: 201 })
+  } catch (error: any) {
+    console.error('Error creating personnel:', error)
+    return NextResponse.json(
+      { message: error.message || 'Internal server error' },
       { status: 500 }
     )
   }
