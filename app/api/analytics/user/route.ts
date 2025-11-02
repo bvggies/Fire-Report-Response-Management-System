@@ -6,9 +6,9 @@ import { prisma } from '@/lib/prisma'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  const session = await getServerSession(authOptions)
+  
   try {
-    const session = await getServerSession(authOptions)
-
     if (!session || !session.user?.id) {
       return NextResponse.json(
         { message: 'Unauthorized' },
