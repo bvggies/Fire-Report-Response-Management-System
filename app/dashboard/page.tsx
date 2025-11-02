@@ -377,7 +377,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs md:text-sm text-red-700 font-medium">Total Incidents</p>
-                        <p className="text-2xl md:text-4xl font-bold text-red-900 mt-1 md:mt-2">{stats.totalIncidents}</p>
+                        <p className="text-2xl md:text-4xl font-bold text-red-900 mt-1 md:mt-2">{stats.totalIncidents ?? 0}</p>
                       </div>
                       <AlertCircle className="w-10 h-10 md:w-14 md:h-14 text-red-600 opacity-40" />
                     </div>
@@ -391,7 +391,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs md:text-sm text-orange-700 font-medium">Active</p>
-                        <p className="text-2xl md:text-4xl font-bold text-orange-900 mt-1 md:mt-2">{stats.activeCount}</p>
+                        <p className="text-2xl md:text-4xl font-bold text-orange-900 mt-1 md:mt-2">{stats.activeCount ?? 0}</p>
                       </div>
                       <TrendingUp className="w-10 h-10 md:w-14 md:h-14 text-orange-600 opacity-40" />
                     </div>
@@ -405,7 +405,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs md:text-sm text-green-700 font-medium">Resolved</p>
-                        <p className="text-2xl md:text-4xl font-bold text-green-900 mt-1 md:mt-2">{stats.resolvedCount}</p>
+                        <p className="text-2xl md:text-4xl font-bold text-green-900 mt-1 md:mt-2">{stats.resolvedCount ?? 0}</p>
                       </div>
                       <CheckCircle className="w-10 h-10 md:w-14 md:h-14 text-green-600 opacity-40" />
                     </div>
@@ -419,7 +419,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs md:text-sm text-blue-700 font-medium">Total Users</p>
-                        <p className="text-2xl md:text-4xl font-bold text-blue-900 mt-1 md:mt-2">{stats.totalUsers}</p>
+                        <p className="text-2xl md:text-4xl font-bold text-blue-900 mt-1 md:mt-2">{stats.totalUsers ?? 0}</p>
                       </div>
                       <Users className="w-10 h-10 md:w-14 md:h-14 text-blue-600 opacity-40" />
                     </div>
@@ -447,7 +447,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs md:text-sm text-indigo-700 font-medium">Resolution Rate</p>
-                        <p className="text-2xl md:text-4xl font-bold text-indigo-900 mt-1 md:mt-2">{stats.resolutionRate}%</p>
+                        <p className="text-2xl md:text-4xl font-bold text-indigo-900 mt-1 md:mt-2">{stats.resolutionRate ?? 0}%</p>
                       </div>
                       <BarChart3 className="w-10 h-10 md:w-14 md:h-14 text-indigo-600 opacity-40" />
                     </div>
