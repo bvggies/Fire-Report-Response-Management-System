@@ -424,8 +424,12 @@ export default function DashboardPage() {
                 )}
               </>
             ) : (
-              <div className="bg-white rounded-lg shadow-sm p-6 md:p-8 mb-4 md:mb-6">
-                <p className="text-gray-500">Loading statistics...</p>
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-6 md:p-8 mb-4 md:mb-6 text-center">
+                <div className="text-4xl mb-3">📊</div>
+                <p className="text-base md:text-lg font-semibold text-yellow-900 mb-2">No Statistics Available Yet</p>
+                <p className="text-sm md:text-base text-yellow-800">
+                  Statistics and analytics will appear here once incidents are reported in the system.
+                </p>
               </div>
             )}
           </>
