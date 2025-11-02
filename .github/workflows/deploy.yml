@@ -1,0 +1,44 @@
+# Optional: This workflow is not required since Vercel auto-deploys from GitHub
+# Keep this if you want CI/CD checks before deployment
+# Or delete this file if you only use Vercel's auto-deployment
+
+name: CI/CD Checks
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      
+      - name: Run linter
+        run: npm run lint
+      
+      - name: Build check
+        run: npm run build
+        env:
+          # These are only needed for build, use dummy values for CI
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://dummy' }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'dummy-secret' }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'http://localhost:3000' }}
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'dummy-key' }}

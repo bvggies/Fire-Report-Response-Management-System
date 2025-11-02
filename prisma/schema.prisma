@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum IncidentStatus {
+  RECEIVED
+  DISPATCHED
+  ON_WAY
+  ARRIVED
+  IN_PROGRESS
+  RESOLVED
+  FALSE_ALARM
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  phone         String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  reports       Incident[]
+  assignments   Assignment[]
+}
+
+model Incident {
+  id            String          @id @default(cuid())
+  reporterId    String?
+  reporterName  String?
+  reporterPhone String?
+  reporterEmail String?
+  location      String
+  latitude      Float?
+  longitude     Float?
+  description   String
+  severity      IncidentSeverity @default(MEDIUM)
+  status        IncidentStatus   @default(RECEIVED)
+  photos        String[]         @default([])
+  videos        String[]         @default([])
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  resolvedAt    DateTime?
+  reporter      User?            @relation(fields: [reporterId], references: [id], onDelete: SetNull)
+  assignments   Assignment[]
+}
+
+model FireStation {
+  id          String       @id @default(cuid())
+  name        String
+  address     String
+  latitude    Float
+  longitude   Float
+  phone       String
+  email       String
+  capacity    Int
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  personnel   Personnel[]
+}
+
+model Personnel {
+  id            String       @id @default(cuid())
+  name          String
+  email         String       @unique
+  phone         String
+  badgeNumber   String       @unique
+  rank          String
+  fireStationId String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  fireStation   FireStation  @relation(fields: [fireStationId], references: [id], onDelete: Cascade)
+  assignments   Assignment[]
+}
+
+model Assignment {
+  id            String       @id @default(cuid())
+  incidentId    String
+  personnelId   String?
+  userId        String?
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  incident      Incident     @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  personnel     Personnel?   @relation(fields: [personnelId], references: [id], onDelete: SetNull)
+  user          User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
