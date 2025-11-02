@@ -103,18 +103,18 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
             <FeatureCard
               icon={<MapPin className="w-12 h-12" />}
-              title="GPS Location"
-              description="Automatic location detection for faster response times"
+              title={getContent('feature1Title', 'GPS Location')}
+              description={getContent('feature1Description', 'Automatic location detection for faster response times')}
             />
             <FeatureCard
               icon={<Shield className="w-12 h-12" />}
-              title="Secure & Reliable"
-              description="Your data is protected with industry-standard security"
+              title={getContent('feature2Title', 'Secure & Reliable')}
+              description={getContent('feature2Description', 'Your data is protected with industry-standard security')}
             />
             <FeatureCard
               icon={<TrendingUp className="w-12 h-12" />}
-              title="Real-time Updates"
-              description="Track your report status in real-time"
+              title={getContent('feature3Title', 'Real-time Updates')}
+              description={getContent('feature3Description', 'Track your report status in real-time')}
             />
           </div>
         </section>

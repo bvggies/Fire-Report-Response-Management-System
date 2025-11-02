@@ -43,15 +43,15 @@ export default function HomePageEditorPage() {
         // Initialize default content if empty
         if (Object.keys(data).length === 0) {
           setContents({
-            heroTitle: { key: 'heroTitle', title: 'Hero Title', content: 'Report Fire Incidents Instantly' },
-            heroSubtitle: { key: 'heroSubtitle', title: 'Hero Subtitle', content: 'Quick and efficient fire reporting system for your safety' },
-            heroDescription: { key: 'heroDescription', title: 'Hero Description', content: 'Our platform allows you to report fire incidents quickly and track their status in real-time. Get help when you need it most.' },
-            feature1Title: { key: 'feature1Title', title: 'Feature 1 Title', content: 'Quick Reporting' },
-            feature1Description: { key: 'feature1Description', title: 'Feature 1 Description', content: 'Report fire incidents in seconds with our streamlined interface' },
-            feature2Title: { key: 'feature2Title', title: 'Feature 2 Title', content: 'Real-Time Tracking' },
-            feature2Description: { key: 'feature2Description', title: 'Feature 2 Description', content: 'Track your incident status in real-time with live updates' },
-            feature3Title: { key: 'feature3Title', title: 'Feature 3 Title', content: 'GPS Location' },
-            feature3Description: { key: 'feature3Description', title: 'Feature 3 Description', content: 'Automatic GPS detection for accurate incident location' },
+            heroTitle: { key: 'heroTitle', title: 'Hero Title', content: 'Quick Fire Response' },
+            heroTitle2: { key: 'heroTitle2', title: 'Hero Title Part 2', content: 'System' },
+            heroSubtitle: { key: 'heroSubtitle', title: 'Hero Subtitle', content: 'Report fire incidents instantly. Help save lives and property with real-time emergency response.' },
+            feature1Title: { key: 'feature1Title', title: 'Feature 1 Title', content: 'GPS Location' },
+            feature1Description: { key: 'feature1Description', title: 'Feature 1 Description', content: 'Automatic location detection for faster response times' },
+            feature2Title: { key: 'feature2Title', title: 'Feature 2 Title', content: 'Secure & Reliable' },
+            feature2Description: { key: 'feature2Description', title: 'Feature 2 Description', content: 'Your data is protected with industry-standard security' },
+            feature3Title: { key: 'feature3Title', title: 'Feature 3 Title', content: 'Real-time Updates' },
+            feature3Description: { key: 'feature3Description', title: 'Feature 3 Description', content: 'Track your report status in real-time' },
           })
         }
       }
