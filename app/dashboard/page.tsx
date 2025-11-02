@@ -332,13 +332,21 @@ export default function DashboardPage() {
                   </button>
                 </>
               )}
-              {session?.user?.role === 'SUPER_ADMIN' && (
-                <button
-                  onClick={() => router.push('/dashboard/admin')}
-                  className="px-3 md:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
-                >
-                  Admin Panel
-                </button>
+              {(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') && (
+                <>
+                  <button
+                    onClick={() => router.push('/dashboard/admin')}
+                    className="px-3 md:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                  >
+                    Admin Panel
+                  </button>
+                  <button
+                    onClick={() => router.push('/dashboard/homepage')}
+                    className="px-3 md:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+                  >
+                    Edit Homepage
+                  </button>
+                </>
               )}
               {isAdmin && (
                 <button
