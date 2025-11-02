@@ -187,7 +187,7 @@ export default function DashboardPage() {
     }
   }, [session, fetchIncidents, fetchAdminStats])
 
-  // Poll for new incidents every 5 seconds (only for admins)
+  // Poll for new incidents and refresh analytics (only for admins)
   useEffect(() => {
     const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
     
@@ -199,14 +199,22 @@ export default function DashboardPage() {
     }
 
     // Poll every 5 seconds for new incidents
-    const interval = setInterval(() => {
+    const incidentInterval = setInterval(() => {
       if (!statusFilter && !severityFilter) {
         fetchIncidents()
       }
     }, 5000) // Check every 5 seconds
 
-    return () => clearInterval(interval)
-  }, [session, incidents.length, lastIncidentCount, statusFilter, severityFilter, fetchIncidents])
+    // Refresh analytics every 30 seconds to catch status updates
+    const statsInterval = setInterval(() => {
+      fetchAdminStats()
+    }, 30000) // Refresh every 30 seconds
+
+    return () => {
+      clearInterval(incidentInterval)
+      clearInterval(statsInterval)
+    }
+  }, [session, incidents.length, lastIncidentCount, statusFilter, severityFilter, fetchIncidents, fetchAdminStats])
 
   const updateStatus = useCallback(async (incidentId: string, newStatus: string) => {
     try {
@@ -218,9 +226,11 @@ export default function DashboardPage() {
 
       if (response.ok) {
         toast.success('Status updated successfully')
-        fetchIncidents()
+        // Refresh incidents list
+        await fetchIncidents()
+        // Refresh analytics for admins
         if (session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') {
-          fetchAdminStats()
+          await fetchAdminStats()
         }
       } else {
         toast.error('Failed to update status')
@@ -231,10 +241,20 @@ export default function DashboardPage() {
     }
   }, [session, fetchIncidents, fetchAdminStats])
 
-  const filteredIncidents = incidents.filter((incident) =>
-    incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    incident.description.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Apply all filters - note: statusFilter and severityFilter are already applied server-side
+  // We only need to apply searchTerm filter client-side
+  const filteredIncidents = incidents.filter((incident) => {
+    const matchesSearch = searchTerm === '' || 
+      incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      incident.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      incident.id.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    // Double-check status filter (in case filter wasn't applied server-side)
+    const matchesStatus = !statusFilter || incident.status === statusFilter
+    const matchesSeverity = !severityFilter || incident.severity === severityFilter
+    
+    return matchesSearch && matchesStatus && matchesSeverity
+  })
 
   const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
 
