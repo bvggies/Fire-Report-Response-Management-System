@@ -187,6 +187,14 @@ export default function DashboardPage() {
     }
   }, [session, fetchIncidents, fetchAdminStats])
 
+  // Refetch incidents when filters change
+  useEffect(() => {
+    if (session && (statusFilter || severityFilter)) {
+      setLoading(true)
+      fetchIncidents()
+    }
+  }, [statusFilter, severityFilter, session, fetchIncidents])
+
   // Poll for new incidents and refresh analytics (only for admins)
   useEffect(() => {
     const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
@@ -587,7 +595,10 @@ export default function DashboardPage() {
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value)
+                setLoading(true)
+              }}
               className="px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
             >
               <option value="">All Statuses</option>
@@ -600,7 +611,10 @@ export default function DashboardPage() {
             </select>
             <select
               value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value)}
+              onChange={(e) => {
+                setSeverityFilter(e.target.value)
+                setLoading(true)
+              }}
               className="px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
             >
               <option value="">All Severities</option>
