@@ -11,29 +11,29 @@ export default function HomePage() {
       <BackgroundVectors />
       
       <div className="relative z-10">
-        {/* Navigation */}
-        <nav className="container mx-auto px-4 py-6">
+        {/* Navigation - Mobile Optimized */}
+        <nav className="container mx-auto px-4 py-4 md:py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Flame className="w-8 h-8 text-red-600" />
-              <span className="text-2xl font-bold text-gray-900">FireResponse</span>
+              <Flame className="w-6 h-6 md:w-8 md:h-8 text-red-600" />
+              <span className="text-xl md:text-2xl font-bold text-gray-900">FireResponse</span>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 md:space-x-4">
               <Link
                 href="/login"
-                className="px-4 py-2 text-gray-700 hover:text-red-600 transition-colors"
+                className="px-3 md:px-4 py-2 text-sm md:text-base text-gray-700 hover:text-red-600 transition-colors"
               >
                 Login
               </Link>
               <Link
                 href="/track"
-                className="px-4 py-2 text-gray-700 hover:text-red-600 transition-colors"
+                className="hidden md:inline px-4 py-2 text-gray-700 hover:text-red-600 transition-colors"
               >
                 Track Report
               </Link>
               <Link
                 href="/report"
-                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-lg"
+                className="px-4 md:px-6 py-2 text-sm md:text-base bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-lg"
               >
                 Report Fire
               </Link>
@@ -41,31 +41,31 @@ export default function HomePage() {
           </div>
         </nav>
 
-        {/* Hero Section */}
-        <section className="container mx-auto px-4 py-20 text-center">
+        {/* Hero Section - Mobile Optimized */}
+        <section className="container mx-auto px-4 py-12 md:py-20 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="max-w-4xl mx-auto"
           >
-            <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6">
+            <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold text-gray-900 mb-4 md:mb-6">
               Quick Fire Response
               <span className="text-red-600 block">System</span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 mb-8">
+            <p className="text-base md:text-xl lg:text-2xl text-gray-600 mb-6 md:mb-8 px-4">
               Report fire incidents instantly. Help save lives and property with real-time emergency response.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center px-4">
               <Link
                 href="/report"
-                className="px-8 py-4 bg-red-600 text-white text-lg rounded-lg hover:bg-red-700 transition-all shadow-xl hover:shadow-2xl transform hover:scale-105"
+                className="px-6 md:px-8 py-3 md:py-4 bg-red-600 text-white text-base md:text-lg rounded-lg hover:bg-red-700 transition-all shadow-xl hover:shadow-2xl transform hover:scale-105"
               >
                 Report Fire Incident
               </Link>
               <Link
                 href="/track"
-                className="px-8 py-4 bg-white text-red-600 text-lg rounded-lg hover:bg-gray-50 transition-all shadow-xl border-2 border-red-600"
+                className="px-6 md:px-8 py-3 md:py-4 bg-white text-red-600 text-base md:text-lg rounded-lg hover:bg-gray-50 transition-all shadow-xl border-2 border-red-600"
               >
                 Track Report
               </Link>
@@ -73,9 +73,9 @@ export default function HomePage() {
           </motion.div>
         </section>
 
-        {/* Features */}
-        <section className="container mx-auto px-4 py-20">
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        {/* Features - Mobile Optimized */}
+        <section className="container mx-auto px-4 py-12 md:py-20">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
             <FeatureCard
               icon={<MapPin className="w-12 h-12" />}
               title="GPS Location"
@@ -94,17 +94,17 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Emergency Hotline */}
-        <section className="container mx-auto px-4 py-12">
-          <div className="bg-red-600 rounded-2xl p-8 text-center text-white shadow-2xl max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold mb-4">Emergency Hotline</h2>
+        {/* Emergency Hotline - Mobile Optimized */}
+        <section className="container mx-auto px-4 py-8 md:py-12">
+          <div className="bg-red-600 rounded-xl md:rounded-2xl p-6 md:p-8 text-center text-white shadow-2xl max-w-4xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">Emergency Hotline</h2>
             <a
               href="tel:911"
-              className="text-4xl md:text-5xl font-bold hover:text-red-200 transition-colors"
+              className="text-3xl md:text-4xl lg:text-5xl font-bold hover:text-red-200 transition-colors block"
             >
               911
             </a>
-            <p className="mt-4 text-xl">Call immediately for life-threatening emergencies</p>
+            <p className="mt-3 md:mt-4 text-base md:text-xl">Call immediately for life-threatening emergencies</p>
           </div>
         </section>
       </div>

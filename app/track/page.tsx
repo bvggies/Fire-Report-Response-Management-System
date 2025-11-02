@@ -103,26 +103,26 @@ export default function TrackPage() {
         <BackgroundVectors />
         
         <div className="relative z-10">
-          <nav className="container mx-auto px-4 py-6">
+          <nav className="container mx-auto px-4 py-4 md:py-6">
             <Link href="/" className="flex items-center space-x-2">
-              <Flame className="w-8 h-8 text-red-600" />
-              <span className="text-2xl font-bold text-gray-900">FireResponse</span>
+              <Flame className="w-6 h-6 md:w-8 md:h-8 text-red-600" />
+              <span className="text-xl md:text-2xl font-bold text-gray-900">FireResponse</span>
             </Link>
           </nav>
 
-          <div className="container mx-auto px-4 py-20 max-w-2xl">
+          <div className="container mx-auto px-4 py-12 md:py-20 max-w-2xl">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-2xl p-8"
+              className="bg-white rounded-xl md:rounded-2xl shadow-2xl p-6 md:p-8"
             >
-              <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold mb-2">Track Your Report</h1>
-                <p className="text-gray-600">Enter your Incident ID to check the status</p>
+              <div className="text-center mb-6 md:mb-8">
+                <h1 className="text-2xl md:text-3xl font-bold mb-2">Track Your Report</h1>
+                <p className="text-sm md:text-base text-gray-600">Enter your Incident ID to check the status</p>
               </div>
               
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-blue-800">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
+                <p className="text-xs md:text-sm text-blue-800">
                   <strong>Where to find your Incident ID?</strong><br />
                   After submitting a report, you'll receive a unique Incident ID. 
                   Check your email or the confirmation message you received.
@@ -134,7 +134,7 @@ export default function TrackPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Incident ID <span className="text-red-600">*</span>
                   </label>
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
                     <input
                       type="text"
                       value={trackingId}
@@ -144,13 +144,13 @@ export default function TrackPage() {
                           handleTrack()
                         }
                       }}
-                      placeholder="Enter your incident ID (e.g., cm123abc456...)"
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono text-sm"
+                      placeholder="Enter your incident ID..."
+                      className="flex-1 px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono text-xs md:text-sm"
                     />
                     <button
                       onClick={handleTrack}
                       disabled={!trackingId.trim()}
-                      className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 md:px-6 py-2 md:py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                     >
                       Track
                     </button>
@@ -186,24 +186,24 @@ export default function TrackPage() {
       <BackgroundVectors />
       
       <div className="relative z-10">
-        <nav className="container mx-auto px-4 py-6">
+        <nav className="container mx-auto px-4 py-4 md:py-6">
           <Link href="/" className="flex items-center space-x-2">
-            <Flame className="w-8 h-8 text-red-600" />
-            <span className="text-2xl font-bold text-gray-900">FireResponse</span>
+            <Flame className="w-6 h-6 md:w-8 md:h-8 text-red-600" />
+            <span className="text-xl md:text-2xl font-bold text-gray-900">FireResponse</span>
           </Link>
         </nav>
 
-        <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl shadow-2xl p-8"
+            className="bg-white rounded-xl md:rounded-2xl shadow-2xl p-4 md:p-8"
           >
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-3xl font-bold">Incident Report</h1>
-              <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${status.color}`}>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold">Incident Report</h1>
+              <div className={`flex items-center space-x-2 px-3 md:px-4 py-2 rounded-lg ${status.color}`}>
                 {status.icon}
-                <span className="font-semibold">{status.label}</span>
+                <span className="font-semibold text-sm md:text-base">{status.label}</span>
               </div>
             </div>
 

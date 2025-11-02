@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
-import { Flame, ArrowLeft, MapPin, Clock, User, AlertCircle } from 'lucide-react'
+import { Flame, ArrowLeft, MapPin, Clock, User } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
@@ -15,48 +15,57 @@ type Incident = {
   severity: string
   createdAt: string
   updatedAt: string
+  resolvedAt?: string | null
   photos: string[]
   videos: string[]
+  reporterName?: string | null
+  reporterEmail?: string | null
+  reporterPhone?: string | null
+  latitude?: number | null
+  longitude?: number | null
   reporter?: {
-    name?: string
-    email?: string
-    phone?: string
+    name?: string | null
+    email?: string | null
+    phone?: string | null
   }
-  latitude?: number
-  longitude?: number
 }
 
 export default function IncidentDetailPage() {
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const router = useRouter()
   const params = useParams()
   const [incident, setIncident] = useState<Incident | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
-    }
-  }, [status, router])
-
-  useEffect(() => {
-    if (session && params.id) {
+    if (params.id) {
       fetchIncident(params.id as string)
     }
-  }, [session, params.id])
+  }, [params.id])
 
   const fetchIncident = async (id: string) => {
     try {
+      setLoading(true)
       const response = await fetch(`/api/incidents/${id}`)
-      if (response.ok) {
-        const data = await response.json()
-        setIncident(data)
-      } else {
-        toast.error('Failed to load incident')
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to load incident')
       }
-    } catch (error) {
+      
+      const data = await response.json()
+      setIncident(data)
+    } catch (error: any) {
       console.error('Error fetching incident:', error)
-      toast.error('Failed to load incident')
+      toast.error(error.message || 'Failed to load incident details')
+      // Redirect back after error
+      setTimeout(() => {
+        if (session) {
+          router.push('/dashboard/my-reports')
+        } else {
+          router.push('/track')
+        }
+      }, 2000)
     } finally {
       setLoading(false)
     }
@@ -84,20 +93,31 @@ export default function IncidentDetailPage() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+        <p className="ml-4 text-gray-600">Loading incident details...</p>
+      </div>
+    )
+  }
+
+  if (!incident && !loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <p className="text-gray-500 text-lg mb-4">Incident not found</p>
+        <button
+          onClick={() => router.back()}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        >
+          Go Back
+        </button>
       </div>
     )
   }
 
   if (!incident) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Incident not found</p>
-      </div>
-    )
+    return null
   }
 
   return (
@@ -106,11 +126,11 @@ export default function IncidentDetailPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.back()}
               className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span>Back to Dashboard</span>
+              <span>Back</span>
             </button>
             <div className="flex items-center space-x-2">
               <Flame className="w-8 h-8 text-red-600" />
@@ -124,19 +144,29 @@ export default function IncidentDetailPage() {
         <div className="bg-white rounded-lg shadow-sm p-8">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold">Incident Details</h1>
-            <select
-              value={incident.status}
-              onChange={(e) => updateStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-            >
-              <option value="RECEIVED">Received</option>
-              <option value="DISPATCHED">Dispatched</option>
-              <option value="ON_WAY">On the Way</option>
-              <option value="ARRIVED">Arrived</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="RESOLVED">Resolved</option>
-              <option value="FALSE_ALARM">False Alarm</option>
-            </select>
+            {(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') ? (
+              <select
+                value={incident.status}
+                onChange={(e) => updateStatus(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              >
+                <option value="RECEIVED">Received</option>
+                <option value="DISPATCHED">Dispatched</option>
+                <option value="ON_WAY">On the Way</option>
+                <option value="ARRIVED">Arrived</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="FALSE_ALARM">False Alarm</option>
+              </select>
+            ) : (
+              <span className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                incident.status === 'RESOLVED' ? 'bg-green-100 text-green-800' :
+                incident.status === 'IN_PROGRESS' || incident.status === 'ON_WAY' ? 'bg-blue-100 text-blue-800' :
+                'bg-yellow-100 text-yellow-800'
+              }`}>
+                {incident.status.replace('_', ' ')}
+              </span>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -195,21 +225,36 @@ export default function IncidentDetailPage() {
               <p className="text-gray-900 bg-gray-50 p-4 rounded-lg">{incident.description}</p>
             </div>
 
-            {incident.reporter && (
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Incident ID
+              </label>
+              <p className="text-gray-900 font-mono text-sm bg-gray-50 p-2 rounded">{incident.id}</p>
+            </div>
+
+            {(incident.reporterName || incident.reporterEmail || incident.reporterPhone || incident.reporter) && (
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-2 flex items-center space-x-2">
-                  <User className="w-4 h-4" />
-                  <span>Reporter Information</span>
+                <label className="block text-sm font-medium text-gray-500 mb-2">
+                  Reporter Information
                 </label>
                 <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                  {incident.reporter.name && (
-                    <p className="text-gray-900"><strong>Name:</strong> {incident.reporter.name}</p>
+                  {(incident.reporterName || incident.reporter?.name) && (
+                    <div className="flex items-center space-x-2">
+                      <User className="w-5 h-5 text-gray-400" />
+                      <p className="text-gray-900">{incident.reporterName || incident.reporter?.name}</p>
+                    </div>
                   )}
-                  {incident.reporter.email && (
-                    <p className="text-gray-900"><strong>Email:</strong> {incident.reporter.email}</p>
+                  {(incident.reporterEmail || incident.reporter?.email) && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-gray-400">📧</span>
+                      <p className="text-gray-900">{incident.reporterEmail || incident.reporter?.email}</p>
+                    </div>
                   )}
-                  {incident.reporter.phone && (
-                    <p className="text-gray-900"><strong>Phone:</strong> {incident.reporter.phone}</p>
+                  {(incident.reporterPhone || incident.reporter?.phone) && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-gray-400">📞</span>
+                      <p className="text-gray-900">{incident.reporterPhone || incident.reporter?.phone}</p>
+                    </div>
                   )}
                 </div>
               </div>

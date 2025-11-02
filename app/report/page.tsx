@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { MapPin, Camera, Video, Send, AlertCircle } from 'lucide-react'
 import { BackgroundVectors } from '@/components/background-vectors'
 import toast from 'react-hot-toast'
@@ -26,6 +28,7 @@ const reportSchema = z.object({
 type ReportForm = z.infer<typeof reportSchema>
 
 export default function ReportPage() {
+  const { data: session } = useSession()
   const [location, setLocation] = useState({ lat: 0, lng: 0 })
   const [locationName, setLocationName] = useState('')
   const [isLoadingLocation, setIsLoadingLocation] = useState(false)
@@ -44,10 +47,34 @@ export default function ReportPage() {
     defaultValues: {
       severity: 'MEDIUM',
       anonymous: false,
+      reporterName: '',
+      reporterPhone: '',
+      reporterEmail: '',
     },
   })
 
   const isAnonymous = watch('anonymous')
+
+  // Auto-fill user information if logged in
+  useEffect(() => {
+    if (session?.user && !isAnonymous) {
+      // Update form values when session is available
+      if (session.user.name) {
+        setValue('reporterName', session.user.name)
+      }
+      if (session.user.email) {
+        setValue('reporterEmail', session.user.email)
+      }
+      if (session.user.phone) {
+        setValue('reporterPhone', session.user.phone)
+      }
+    } else if (isAnonymous) {
+      // Clear fields if user chooses anonymous
+      setValue('reporterName', '')
+      setValue('reporterEmail', '')
+      setValue('reporterPhone', '')
+    }
+  }, [session, isAnonymous, setValue])
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -122,14 +149,20 @@ export default function ReportPage() {
       
       // Show success with ID
       toast.success(
-        `Report submitted! Incident ID: ${incidentId.slice(0, 12)}...`,
-        { duration: 5000 }
+        `Report submitted successfully! Redirecting...`,
+        { duration: 2000 }
       )
       
-      // Redirect to track page with the ID prominently displayed
+      // Redirect based on user role
       setTimeout(() => {
-        window.location.href = `/track?id=${incidentId}`
-      }, 1500)
+        if (session?.user?.role === 'USER') {
+          // Redirect logged-in users to their reports page
+          router.push('/dashboard/my-reports')
+        } else {
+          // Redirect guests to track page
+          router.push(`/track?id=${incidentId}`)
+        }
+      }, 2000)
     } catch (error: any) {
       const errorMessage = error?.message || 'Failed to submit report. Please try again.'
       toast.error(errorMessage)
@@ -149,24 +182,24 @@ export default function ReportPage() {
       <BackgroundVectors />
       
       <div className="relative z-10">
-        {/* Navigation */}
-        <nav className="container mx-auto px-4 py-6">
+        {/* Navigation - Mobile Optimized */}
+        <nav className="container mx-auto px-4 py-4 md:py-6">
           <Link href="/" className="flex items-center space-x-2">
-            <Flame className="w-8 h-8 text-red-600" />
-            <span className="text-2xl font-bold text-gray-900">FireResponse</span>
+            <Flame className="w-6 h-6 md:w-8 md:h-8 text-red-600" />
+            <span className="text-xl md:text-2xl font-bold text-gray-900">FireResponse</span>
           </Link>
         </nav>
 
-        <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <div className="container mx-auto px-4 py-6 md:py-12 max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-white rounded-2xl shadow-2xl p-8"
+            className="bg-white rounded-xl md:rounded-2xl shadow-2xl p-4 md:p-8"
           >
-            <div className="flex items-center space-x-3 mb-8">
-              <AlertCircle className="w-8 h-8 text-red-600" />
-              <h1 className="text-3xl font-bold text-gray-900">Report Fire Incident</h1>
+            <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-3 mb-6 md:mb-8">
+              <AlertCircle className="w-6 h-6 md:w-8 md:h-8 text-red-600" />
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Report Fire Incident</h1>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -239,10 +272,10 @@ export default function ReportPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Photos / Videos
                 </label>
-                <div className="flex space-x-4">
-                  <label className="flex-1 flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-red-500 transition-colors">
-                    <Camera className="w-5 h-5 mr-2 text-gray-400" />
-                    <span className="text-sm text-gray-600">Add Photos</span>
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <label className="flex-1 flex flex-col sm:flex-row items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-red-500 transition-colors">
+                    <Camera className="w-5 h-5 sm:mr-2 mb-1 sm:mb-0 text-gray-400" />
+                    <span className="text-sm text-gray-600 text-center sm:text-left">Add Photos</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -256,9 +289,9 @@ export default function ReportPage() {
                       }}
                     />
                   </label>
-                  <label className="flex-1 flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-red-500 transition-colors">
-                    <Video className="w-5 h-5 mr-2 text-gray-400" />
-                    <span className="text-sm text-gray-600">Add Videos</span>
+                  <label className="flex-1 flex flex-col sm:flex-row items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-red-500 transition-colors">
+                    <Video className="w-5 h-5 sm:mr-2 mb-1 sm:mb-0 text-gray-400" />
+                    <span className="text-sm text-gray-600 text-center sm:text-left">Add Videos</span>
                     <input
                       type="file"
                       accept="video/*"
@@ -297,34 +330,37 @@ export default function ReportPage() {
                   <div className="grid md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Name (optional)
+                        Name {session?.user?.name && <span className="text-green-600 text-xs">(Auto-filled)</span>}
                       </label>
                       <input
                         type="text"
                         {...register('reporterName')}
                         placeholder="Your name"
+                        defaultValue={session?.user?.name || ''}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone (optional)
+                        Phone {session?.user?.phone && <span className="text-green-600 text-xs">(Auto-filled)</span>}
                       </label>
                       <input
                         type="tel"
                         {...register('reporterPhone')}
                         placeholder="Your phone"
+                        defaultValue={session?.user?.phone || ''}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email (optional)
+                        Email {session?.user?.email && <span className="text-green-600 text-xs">(Auto-filled)</span>}
                       </label>
                       <input
                         type="email"
                         {...register('reporterEmail')}
                         placeholder="Your email"
+                        defaultValue={session?.user?.email || ''}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       />
                     </div>
