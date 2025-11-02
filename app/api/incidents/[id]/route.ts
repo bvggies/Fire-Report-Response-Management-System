@@ -36,10 +36,24 @@ export async function GET(
     }
 
     return NextResponse.json(incident)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching incident:', error)
+    
+    if (error?.message?.includes('does not exist') || error?.message?.includes('relation')) {
+      return NextResponse.json(
+        { 
+          message: 'Database schema not initialized',
+          details: 'Database tables do not exist'
+        },
+        { status: 500 }
+      )
+    }
+    
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { 
+        message: 'Internal server error',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
       { status: 500 }
     )
   }

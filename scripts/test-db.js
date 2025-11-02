@@ -49,7 +49,7 @@ async function test() {
     `
     
     console.log('\n📋 Tables in database:')
-    tables.forEach((table: any) => {
+    tables.forEach((table) => {
       console.log(`   - ${table.table_name}`)
     })
     

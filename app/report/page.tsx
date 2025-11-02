@@ -112,7 +112,10 @@ export default function ReportPage() {
         }),
       })
 
-      if (!response.ok) throw new Error('Failed to submit report')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || errorData.details || 'Failed to submit report')
+      }
 
       const result = await response.json()
       const incidentId = result.id
@@ -127,9 +130,15 @@ export default function ReportPage() {
       setTimeout(() => {
         window.location.href = `/track?id=${incidentId}`
       }, 1500)
-    } catch (error) {
-      toast.error('Failed to submit report. Please try again.')
-      console.error(error)
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Failed to submit report. Please try again.'
+      toast.error(errorMessage)
+      console.error('Report submission error:', error)
+      
+      // If database schema error, show helpful message
+      if (errorMessage.includes('schema') || errorMessage.includes('does not exist')) {
+        toast.error('Database not set up. Please contact administrator.', { duration: 8000 })
+      }
     } finally {
       setIsSubmitting(false)
     }

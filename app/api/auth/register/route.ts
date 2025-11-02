@@ -54,11 +54,17 @@ export async function POST(request: Request) {
       )
     }
     
-    if (error?.message?.includes('prisma') || error?.message?.includes('database')) {
+    if (error?.message?.includes('prisma') || error?.message?.includes('database') || error?.code?.startsWith('P1')) {
+      const isConnectionError = error?.code === 'P1001' || error?.code === 'P1000' || 
+                                error?.message?.includes("Can't reach") ||
+                                error?.message?.includes('connection')
+      
       return NextResponse.json(
         { 
-          message: 'Database connection error',
-          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+          message: isConnectionError ? 'Database connection failed. Please check DATABASE_URL and ensure database is active.' : 'Database error',
+          details: process.env.NODE_ENV === 'development' ? `${error.code}: ${error.message}` : 
+                   (error.code === 'P1001' ? 'Database server unreachable' : 
+                    error.code === 'P1000' ? 'Authentication failed' : undefined)
         },
         { status: 500 }
       )
