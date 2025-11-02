@@ -75,11 +75,13 @@ export default function HomePage() {
             className="max-w-4xl mx-auto"
           >
             <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold text-gray-900 mb-4 md:mb-6">
-              Quick Fire Response
-              <span className="text-red-600 block">System</span>
+              {loading ? 'Quick Fire Response' : getContent('heroTitle', 'Quick Fire Response')}
+              <span className="text-red-600 block">
+                {loading ? 'System' : getContent('heroTitle2', 'System')}
+              </span>
             </h1>
             <p className="text-base md:text-xl lg:text-2xl text-gray-600 mb-6 md:mb-8 px-4">
-              Report fire incidents instantly. Help save lives and property with real-time emergency response.
+              {getContent('heroSubtitle', 'Report fire incidents instantly. Help save lives and property with real-time emergency response.')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center px-4">
               <Link
