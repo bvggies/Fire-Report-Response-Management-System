@@ -705,10 +705,28 @@ export default function DashboardPage() {
                       className="hover:bg-gray-50"
                     >
                       <td className="px-4 md:px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">{incident.location}</div>
-                        <div className="text-xs md:text-sm text-gray-500 truncate max-w-xs">{incident.description}</div>
-                        <div className="md:hidden mt-2 text-xs text-gray-500">
-                          Reported: {formatDate(incident.createdAt)}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-900">{incident.location}</div>
+                            <div className="text-xs md:text-sm text-gray-500 truncate max-w-xs">{incident.description}</div>
+                            <div className="md:hidden mt-2 text-xs text-gray-500">
+                              Reported: {formatDate(incident.createdAt)}
+                            </div>
+                          </div>
+                          {isAdmin && incident.latitude && incident.longitude && (
+                            <a
+                              href={`https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 font-medium text-xs whitespace-nowrap ml-2 p-1 hover:bg-blue-50 rounded"
+                              title="Open in Google Maps"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MapPin className="w-3 h-3 md:w-4 md:h-4" />
+                              <span className="hidden md:inline">Map</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 md:px-6 py-4">
