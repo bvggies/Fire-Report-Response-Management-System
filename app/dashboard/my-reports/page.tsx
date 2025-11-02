@@ -184,63 +184,76 @@ export default function MyReportsPage() {
         )}
 
         {/* Statistics Cards */}
-        {!statsLoading && stats && (
+        {statsLoading ? (
+          <div className="bg-white rounded-lg shadow-sm p-6 md:p-8 mb-4 md:mb-6">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+              <span className="ml-3 text-gray-600">Loading your statistics...</span>
+            </div>
+          </div>
+        ) : stats ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+              className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-red-200"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs md:text-sm text-gray-600">Total Reports</p>
-                  <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.totalReports}</p>
+                  <p className="text-xs md:text-sm text-red-700 font-medium">Total Reports</p>
+                  <p className="text-2xl md:text-4xl font-bold text-red-900 mt-1 md:mt-2">{stats.totalReports}</p>
                 </div>
-                <FileText className="w-8 h-8 md:w-12 md:h-12 text-red-600 opacity-20" />
+                <FileText className="w-10 h-10 md:w-14 md:h-14 text-red-600 opacity-40" />
               </div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+              className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-orange-200"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs md:text-sm text-gray-600">Active</p>
-                  <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.activeCount}</p>
+                  <p className="text-xs md:text-sm text-orange-700 font-medium">Active</p>
+                  <p className="text-2xl md:text-4xl font-bold text-orange-900 mt-1 md:mt-2">{stats.activeCount}</p>
                 </div>
-                <AlertCircle className="w-8 h-8 md:w-12 md:h-12 text-orange-600 opacity-20" />
+                <AlertCircle className="w-10 h-10 md:w-14 md:h-14 text-orange-600 opacity-40" />
               </div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+              className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-green-200"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs md:text-sm text-gray-600">Resolved</p>
-                  <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.resolvedCount}</p>
+                  <p className="text-xs md:text-sm text-green-700 font-medium">Resolved</p>
+                  <p className="text-2xl md:text-4xl font-bold text-green-900 mt-1 md:mt-2">{stats.resolvedCount}</p>
                 </div>
-                <CheckCircle2 className="w-8 h-8 md:w-12 md:h-12 text-green-600 opacity-20" />
+                <CheckCircle2 className="w-10 h-10 md:w-14 md:h-14 text-green-600 opacity-40" />
               </div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+              className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-blue-200"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs md:text-sm text-gray-600">Recent (7d)</p>
-                  <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.recentReports}</p>
+                  <p className="text-xs md:text-sm text-blue-700 font-medium">Recent (7d)</p>
+                  <p className="text-2xl md:text-4xl font-bold text-blue-900 mt-1 md:mt-2">{stats.recentReports}</p>
                 </div>
-                <TrendingUp className="w-8 h-8 md:w-12 md:h-12 text-blue-600 opacity-20" />
+                <TrendingUp className="w-10 h-10 md:w-14 md:h-14 text-blue-600 opacity-40" />
               </div>
             </motion.div>
+          </div>
+        ) : (
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 md:p-6 mb-4 md:mb-6">
+            <p className="text-sm md:text-base text-blue-800">
+              📊 <strong>No statistics yet.</strong> Submit your first report to see your personal analytics!
+            </p>
           </div>
         )}
 
@@ -265,14 +278,13 @@ export default function MyReportsPage() {
                   </LineChart>
                 </ResponsiveContainer>
               </motion.div>
-            )}
-            {stats.bySeverity.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <h2 className="text-lg md:text-xl font-bold mb-4">Reports by Severity</h2>
+              {stats.bySeverity && stats.bySeverity.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-lg shadow-md p-4 md:p-6 border border-gray-200"
+                >
+                  <h2 className="text-lg md:text-xl font-bold mb-4">🎯 Reports by Severity</h2>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
@@ -293,46 +305,52 @@ export default function MyReportsPage() {
                   </PieChart>
                 </ResponsiveContainer>
               </motion.div>
-            )}
-          </div>
+              )}
+            </div>
+          </>
         )}
 
         {/* Additional Stats */}
-        {!statsLoading && stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-            {stats.avgResolutionHours > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center space-x-3">
-                  <Clock className="w-8 h-8 md:w-10 md:h-10 text-blue-600" />
-                  <div>
-                    <p className="text-sm md:text-base text-gray-600">Average Resolution Time</p>
-                    <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.avgResolutionHours.toFixed(1)} hours</p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-            {stats.byStatus.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <h3 className="text-sm md:text-base font-semibold mb-3">Status Breakdown</h3>
-                <div className="space-y-2">
-                  {stats.byStatus.map((item) => (
-                    <div key={item.status} className="flex items-center justify-between">
-                      <span className="text-xs md:text-sm text-gray-600">{item.status.replace('_', ' ')}</span>
-                      <span className="text-sm md:text-base font-semibold">{item.count}</span>
+        {!statsLoading && stats && (stats.avgResolutionHours > 0 || (stats.byStatus && stats.byStatus.length > 0)) && (
+          <>
+            <div className="mb-3 md:mb-4">
+              <h3 className="text-lg md:text-xl font-bold text-gray-900">📋 Detailed Metrics</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
+              {stats.avgResolutionHours > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-blue-200"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Clock className="w-10 h-10 md:w-12 md:h-12 text-blue-600" />
+                    <div>
+                      <p className="text-sm md:text-base text-blue-700 font-medium">Average Resolution Time</p>
+                      <p className="text-2xl md:text-3xl font-bold text-blue-900">{stats.avgResolutionHours.toFixed(1)} hours</p>
                     </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </div>
+                  </div>
+                </motion.div>
+              )}
+              {stats.byStatus && stats.byStatus.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-lg shadow-md p-4 md:p-6 border border-gray-200"
+                >
+                  <h3 className="text-base md:text-lg font-semibold mb-3 text-gray-900">📊 Status Breakdown</h3>
+                  <div className="space-y-2">
+                    {stats.byStatus.map((item) => (
+                      <div key={item.status} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span className="text-xs md:text-sm text-gray-700 font-medium">{item.status.replace('_', ' ')}</span>
+                        <span className="text-sm md:text-base font-bold text-gray-900">{item.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          </>
         )}
 
         {/* Filters - Mobile Optimized */}

@@ -227,84 +227,84 @@ export default function DashboardPage() {
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                    className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-red-200"
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs md:text-sm text-gray-600">Total Incidents</p>
-                        <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.totalIncidents}</p>
+                        <p className="text-xs md:text-sm text-red-700 font-medium">Total Incidents</p>
+                        <p className="text-2xl md:text-4xl font-bold text-red-900 mt-1 md:mt-2">{stats.totalIncidents}</p>
                       </div>
-                      <AlertCircle className="w-8 h-8 md:w-12 md:h-12 text-red-600 opacity-20" />
+                      <AlertCircle className="w-10 h-10 md:w-14 md:h-14 text-red-600 opacity-40" />
                     </div>
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                    className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-orange-200"
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs md:text-sm text-gray-600">Active</p>
-                        <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.activeCount}</p>
+                        <p className="text-xs md:text-sm text-orange-700 font-medium">Active</p>
+                        <p className="text-2xl md:text-4xl font-bold text-orange-900 mt-1 md:mt-2">{stats.activeCount}</p>
                       </div>
-                      <TrendingUp className="w-8 h-8 md:w-12 md:h-12 text-orange-600 opacity-20" />
+                      <TrendingUp className="w-10 h-10 md:w-14 md:h-14 text-orange-600 opacity-40" />
                     </div>
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                    className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-green-200"
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs md:text-sm text-gray-600">Resolved</p>
-                        <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.resolvedCount}</p>
+                        <p className="text-xs md:text-sm text-green-700 font-medium">Resolved</p>
+                        <p className="text-2xl md:text-4xl font-bold text-green-900 mt-1 md:mt-2">{stats.resolvedCount}</p>
                       </div>
-                      <CheckCircle className="w-8 h-8 md:w-12 md:h-12 text-green-600 opacity-20" />
+                      <CheckCircle className="w-10 h-10 md:w-14 md:h-14 text-green-600 opacity-40" />
                     </div>
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                    className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-blue-200"
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs md:text-sm text-gray-600">Total Users</p>
-                        <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.totalUsers}</p>
+                        <p className="text-xs md:text-sm text-blue-700 font-medium">Total Users</p>
+                        <p className="text-2xl md:text-4xl font-bold text-blue-900 mt-1 md:mt-2">{stats.totalUsers}</p>
                       </div>
-                      <Users className="w-8 h-8 md:w-12 md:h-12 text-blue-600 opacity-20" />
+                      <Users className="w-10 h-10 md:w-14 md:h-14 text-blue-600 opacity-40" />
                     </div>
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                    className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-purple-200"
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs md:text-sm text-gray-600">Stations</p>
-                        <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.totalStations}</p>
+                        <p className="text-xs md:text-sm text-purple-700 font-medium">Stations</p>
+                        <p className="text-2xl md:text-4xl font-bold text-purple-900 mt-1 md:mt-2">{stats.totalStations}</p>
                       </div>
-                      <Building2 className="w-8 h-8 md:w-12 md:h-12 text-purple-600 opacity-20" />
+                      <Building2 className="w-10 h-10 md:w-14 md:h-14 text-purple-600 opacity-40" />
                     </div>
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
-                    className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                    className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-indigo-200"
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs md:text-sm text-gray-600">Resolution Rate</p>
-                        <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.resolutionRate}%</p>
+                        <p className="text-xs md:text-sm text-indigo-700 font-medium">Resolution Rate</p>
+                        <p className="text-2xl md:text-4xl font-bold text-indigo-900 mt-1 md:mt-2">{stats.resolutionRate}%</p>
                       </div>
-                      <BarChart3 className="w-8 h-8 md:w-12 md:h-12 text-indigo-600 opacity-20" />
+                      <BarChart3 className="w-10 h-10 md:w-14 md:h-14 text-indigo-600 opacity-40" />
                     </div>
                   </motion.div>
                 </div>
@@ -334,9 +334,9 @@ export default function DashboardPage() {
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                        className="bg-white rounded-lg shadow-md p-4 md:p-6 border border-gray-200"
                       >
-                        <h2 className="text-lg md:text-xl font-bold mb-4">Incidents by Severity</h2>
+                        <h2 className="text-lg md:text-xl font-bold mb-4">🎯 Incidents by Severity</h2>
                         <ResponsiveContainer width="100%" height={250}>
                           <PieChart>
                             <Pie
@@ -358,59 +358,70 @@ export default function DashboardPage() {
                         </ResponsiveContainer>
                       </motion.div>
                     )}
-                  </div>
+                    </div>
+                  </>
                 )}
 
                 {/* Additional Admin Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
-                  {stats.avgResolutionHours > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <Clock className="w-8 h-8 md:w-10 md:h-10 text-blue-600" />
-                        <div>
-                          <p className="text-sm md:text-base text-gray-600">Avg Resolution Time</p>
-                          <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.avgResolutionHours.toFixed(1)}h</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                  {stats.topReporters && stats.topReporters.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-                    >
-                      <h3 className="text-sm md:text-base font-semibold mb-3">Top Reporters</h3>
-                      <div className="space-y-2">
-                        {stats.topReporters.slice(0, 3).map((reporter) => (
-                          <div key={reporter.reporterId} className="flex items-center justify-between">
-                            <span className="text-xs md:text-sm text-gray-600 truncate">{reporter.name}</span>
-                            <span className="text-sm md:text-base font-semibold">{reporter.count}</span>
+                {(stats.avgResolutionHours > 0 || (stats.topReporters && stats.topReporters.length > 0) || stats.recentIncidents > 0) && (
+                  <>
+                    <div className="mb-3 md:mb-4">
+                      <h3 className="text-lg md:text-xl font-bold text-gray-900">📋 Performance Metrics</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
+                      {stats.avgResolutionHours > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-blue-200"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Clock className="w-10 h-10 md:w-12 md:h-12 text-blue-600" />
+                            <div>
+                              <p className="text-sm md:text-base text-blue-700 font-medium">Avg Resolution Time</p>
+                              <p className="text-2xl md:text-3xl font-bold text-blue-900">{stats.avgResolutionHours.toFixed(1)}h</p>
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                  {stats.recentIncidents > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <TrendingUp className="w-8 h-8 md:w-10 md:h-10 text-green-600" />
-                        <div>
-                          <p className="text-sm md:text-base text-gray-600">Recent (24h)</p>
-                          <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.recentIncidents}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </div>
+                        </motion.div>
+                      )}
+                      {stats.topReporters && stats.topReporters.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-white rounded-lg shadow-md p-4 md:p-6 border border-gray-200"
+                        >
+                          <h3 className="text-base md:text-lg font-semibold mb-3 text-gray-900">🏆 Top Reporters</h3>
+                          <div className="space-y-2">
+                            {stats.topReporters.slice(0, 3).map((reporter) => (
+                              <div key={reporter.reporterId} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-xs md:text-sm text-gray-700 font-medium truncate block">{reporter.name}</span>
+                                  <span className="text-xs text-gray-500 truncate block">{reporter.email}</span>
+                                </div>
+                                <span className="text-sm md:text-base font-bold text-red-600 ml-2">{reporter.count}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                      {stats.recentIncidents > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-green-200"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <TrendingUp className="w-10 h-10 md:w-12 md:h-12 text-green-600" />
+                            <div>
+                              <p className="text-sm md:text-base text-green-700 font-medium">Recent (24h)</p>
+                              <p className="text-2xl md:text-3xl font-bold text-green-900">{stats.recentIncidents}</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
+                  </>
+                )}
               </>
             ) : (
               <div className="bg-white rounded-lg shadow-sm p-6 md:p-8 mb-4 md:mb-6">
