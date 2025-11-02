@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
-import { Flame, ArrowLeft, MapPin, Clock, User } from 'lucide-react'
+import { Flame, ArrowLeft, MapPin, Clock, User, ExternalLink } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import toast from 'react-hot-toast'
 

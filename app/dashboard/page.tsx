@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Flame, LogOut, Map, Filter, Search, AlertCircle, CheckCircle, BarChart3, TrendingUp, Users, Building2, Clock, Volume2, VolumeX } from 'lucide-react'
+import { Flame, LogOut, Map, Filter, Search, AlertCircle, CheckCircle, BarChart3, TrendingUp, Users, Building2, Clock, Volume2, VolumeX, MapPin, ExternalLink } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import { formatDate } from '@/lib/utils'
 import { motion } from 'framer-motion'
