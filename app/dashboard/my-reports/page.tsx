@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Flame, LogOut, Search, Filter, FileText, Calendar, MapPin, AlertCircle, BarChart3, TrendingUp, Clock, CheckCircle2 } from 'lucide-react'
@@ -62,14 +62,7 @@ export default function MyReportsPage() {
     }
   }, [status, router])
 
-  useEffect(() => {
-    if (session) {
-      fetchMyReports()
-      fetchUserStats()
-    }
-  }, [session, statusFilter])
-
-  const fetchMyReports = async () => {
+  const fetchMyReports = useCallback(async () => {
     try {
       const params = new URLSearchParams()
       if (statusFilter) params.append('status', statusFilter)
@@ -88,9 +81,9 @@ export default function MyReportsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [session, statusFilter])
 
-  const fetchUserStats = async () => {
+  const fetchUserStats = useCallback(async () => {
     try {
       const response = await fetch('/api/analytics/user')
       if (response.ok) {
@@ -102,7 +95,14 @@ export default function MyReportsPage() {
     } finally {
       setStatsLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (session) {
+      fetchMyReports()
+      fetchUserStats()
+    }
+  }, [session, fetchMyReports, fetchUserStats])
 
   const filteredIncidents = incidents.filter((incident) =>
     incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
