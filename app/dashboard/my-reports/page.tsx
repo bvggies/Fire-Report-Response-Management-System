@@ -104,6 +104,17 @@ export default function MyReportsPage() {
     }
   }, [session, fetchMyReports, fetchUserStats])
 
+  // Refresh stats periodically (every 30 seconds) to catch status updates
+  useEffect(() => {
+    if (!session) return
+
+    const interval = setInterval(() => {
+      fetchUserStats()
+    }, 30000) // Refresh every 30 seconds
+
+    return () => clearInterval(interval)
+  }, [session, fetchUserStats])
+
   const filteredIncidents = incidents.filter((incident) =>
     incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
     incident.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
