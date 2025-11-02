@@ -83,9 +83,16 @@ export default function IncidentDetailPage() {
 
       if (response.ok) {
         toast.success('Status updated successfully')
-        if (incident) {
-          fetchIncident(incident.id)
-        }
+        // Refresh incident details
+        await fetchIncident(incident.id)
+        // Redirect after a short delay to see refreshed analytics
+        setTimeout(() => {
+          if (session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') {
+            router.push('/dashboard')
+          } else {
+            router.push('/dashboard/my-reports')
+          }
+        }, 1500)
       } else {
         toast.error('Failed to update status')
       }
@@ -93,7 +100,7 @@ export default function IncidentDetailPage() {
       console.error('Error updating status:', error)
       toast.error('Failed to update status')
     }
-  }, [incident, fetchIncident])
+  }, [incident, fetchIncident, session, router])
 
   if (loading) {
     return (
