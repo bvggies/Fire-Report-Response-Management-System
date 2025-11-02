@@ -97,6 +97,7 @@ export default function AdminPanelPage() {
     if (status === 'unauthenticated') {
       router.push('/login')
     } else if (session?.user?.role !== 'ADMIN' && session?.user?.role !== 'SUPER_ADMIN') {
+      // ADMIN and SUPER_ADMIN can access this panel
       router.push('/dashboard')
     }
   }, [status, session, router])

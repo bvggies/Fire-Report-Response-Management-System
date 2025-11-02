@@ -36,6 +36,14 @@ export async function PATCH(
       )
     }
 
+    // Prevent ADMIN from assigning SUPER_ADMIN role
+    if (role === 'SUPER_ADMIN' && session.user?.role !== 'SUPER_ADMIN') {
+      return NextResponse.json(
+        { message: 'Unauthorized to assign SUPER_ADMIN role' },
+        { status: 403 }
+      )
+    }
+
     // Check if email is being changed and if it's already taken
     if (email && email !== existingUser.email) {
       const emailTaken = await prisma.user.findUnique({

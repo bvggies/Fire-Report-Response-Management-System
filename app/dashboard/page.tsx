@@ -67,34 +67,45 @@ export default function DashboardPage() {
 
   // Play alarm sound
   const playAlarm = useCallback(() => {
-    if (!beepEnabled || isBeeping) return
-
+    if (!beepEnabled) return
+    
+    // Allow playing even if currently beeping (for multiple incidents)
     try {
       setIsBeeping(true)
       // Play the alarm sound file
       const audio = new Audio('/alarm.wav')
       audio.volume = 0.8
       
-      // Play the alarm sound
-      audio.play().catch((error) => {
-        console.error('Error playing alarm:', error)
-        setIsBeeping(false)
-      })
+      // Preload and play the alarm sound
+      audio.load()
+      const playPromise = audio.play()
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log('Alarm sound playing')
+          })
+          .catch((error) => {
+            console.error('Error playing alarm:', error)
+            // Try to play again after user interaction
+            setIsBeeping(false)
+          })
+      }
 
-      // Reset beeping state after audio finishes (fallback)
+      // Reset beeping state after audio finishes
       audio.onended = () => {
         setIsBeeping(false)
       }
       
-      // Also reset after 3 seconds as fallback
+      // Also reset after 5 seconds as fallback (alarm.wav might be longer)
       setTimeout(() => {
         setIsBeeping(false)
-      }, 3000)
+      }, 5000)
     } catch (error) {
       console.error('Error playing alarm:', error)
       setIsBeeping(false)
     }
-  }, [beepEnabled, isBeeping])
+  }, [beepEnabled])
 
   const fetchIncidents = useCallback(async () => {
     try {
@@ -122,7 +133,10 @@ export default function DashboardPage() {
               
               if (newIncidentIds.length > 0) {
                 // New incident(s) detected!
-                playAlarm()
+                // Call playAlarm immediately (outside of setState to ensure it executes)
+                setTimeout(() => {
+                  playAlarm()
+                }, 0)
                 toast.success(`🚨 ${newIncidentIds.length} new incident${newIncidentIds.length > 1 ? 's' : ''} reported!`, {
                   duration: 5000,
                   icon: '🚨',

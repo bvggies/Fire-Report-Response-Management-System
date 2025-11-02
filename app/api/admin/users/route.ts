@@ -64,6 +64,14 @@ export async function POST(request: Request) {
       )
     }
 
+    // Prevent ADMIN from creating SUPER_ADMIN users
+    if (role === 'SUPER_ADMIN' && session.user?.role !== 'SUPER_ADMIN') {
+      return NextResponse.json(
+        { message: 'Unauthorized to create SUPER_ADMIN users' },
+        { status: 403 }
+      )
+    }
+
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
