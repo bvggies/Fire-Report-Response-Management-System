@@ -138,6 +138,8 @@ export default function DashboardPage() {
     incident.description.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -145,8 +147,6 @@ export default function DashboardPage() {
       </div>
     )
   }
-
-  const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
 
   return (
     <div className="min-h-screen bg-gray-50">
