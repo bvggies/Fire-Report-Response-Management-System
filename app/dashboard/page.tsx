@@ -297,6 +297,24 @@ export default function DashboardPage() {
                   Admin Panel
                 </button>
               )}
+              {isAdmin && (
+                <button
+                  onClick={() => setBeepEnabled(!beepEnabled)}
+                  className={`flex items-center space-x-2 px-3 md:px-4 py-2 rounded-lg transition-colors text-sm ${
+                    beepEnabled
+                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  title={beepEnabled ? 'Disable beep notifications' : 'Enable beep notifications'}
+                >
+                  {beepEnabled ? (
+                    <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
+                  ) : (
+                    <VolumeX className="w-4 h-4 md:w-5 md:h-5" />
+                  )}
+                  <span className="hidden md:inline">{beepEnabled ? 'Sound On' : 'Sound Off'}</span>
+                </button>
+              )}
               <span className="hidden md:inline text-gray-700 text-sm">{session?.user?.email}</span>
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
