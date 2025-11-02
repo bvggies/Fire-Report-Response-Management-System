@@ -768,12 +768,27 @@ export default function DashboardPage() {
                         {formatDate(incident.createdAt)}
                       </td>
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => router.push(`/dashboard/incidents/${incident.id}`)}
-                          className="text-red-600 hover:text-red-700 font-medium text-xs md:text-sm"
-                        >
-                          View Details
-                        </button>
+                        <div className="flex items-center space-x-3">
+                          {isAdmin && incident.latitude && incident.longitude && (
+                            <a
+                              href={`https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 font-medium text-xs md:text-sm"
+                              title="Open location in Google Maps"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MapPin className="w-4 h-4" />
+                              <span className="hidden md:inline">Map</span>
+                            </a>
+                          )}
+                          <button
+                            onClick={() => router.push(`/dashboard/incidents/${incident.id}`)}
+                            className="text-red-600 hover:text-red-700 font-medium text-xs md:text-sm"
+                          >
+                            View Details
+                          </button>
+                        </div>
                       </td>
                     </motion.tr>
                   ))
