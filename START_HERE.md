@@ -19,28 +19,13 @@ Your project is **ready to deploy**! Follow these steps in order.
 4. **Copy the connection string** (looks like `postgresql://user:password@ep-xxx.neon.tech/dbname?sslmode=require`)
 5. **SAVE IT** - you'll paste this into Vercel
 
-### 2️⃣ Push to GitHub (1 min)
+### 2️⃣ Push to GitHub (1 min) ✅ DONE!
 
-```bash
-# If you haven't done this yet:
-git add .
-git commit -m "Ready for deployment"
-git push origin main
-```
+✅ **Code already pushed to GitHub!**  
+✅ **Repository**: https://github.com/bvggies/Fire-Report-Response-Management-System  
+✅ **50 files committed and pushed**
 
-**OR** if you haven't created the GitHub repo yet:
-
-```bash
-# Initialize git (if needed)
-git init
-git add .
-git commit -m "Initial commit"
-
-# Create repo on GitHub, then:
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-git branch -M main
-git push -u origin main
-```
+You can skip this step and move to Step 3!
 
 ### 3️⃣ Deploy to Vercel (5 min)
 
@@ -50,9 +35,9 @@ git push -u origin main
 4. **Before clicking Deploy**, click **"Environment Variables"**
 5. Add these 4 variables:
 
-   **Variable 1: DATABASE_URL**
+   **Variable 1: DATABASE_URL** ✅
    - Key: `DATABASE_URL`
-   - Value: `[Paste your Neon connection string]`
+   - Value: `postgresql://neondb_owner:npg_uvI9C5shTArk@ep-dawn-night-adoyawgj-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require`
    - Environments: ✓ Production ✓ Preview ✓ Development
 
    **Variable 2: NEXTAUTH_URL**
@@ -61,15 +46,12 @@ git push -u origin main
    - Note: Update with actual URL after first deploy!
    - Environments: ✓ Production ✓ Preview ✓ Development
 
-   **Variable 3: NEXTAUTH_SECRET**
+   **Variable 3: NEXTAUTH_SECRET** ✅
    - Key: `NEXTAUTH_SECRET`
-   - Value: Generate one with:
-     ```bash
-     openssl rand -base64 32
-     ```
+   - Value: `wO3UgWpcED/jI6+v/EYGG5uiIaE84Fft9x7og9+5FKs=`
    - Environments: ✓ Production ✓ Preview ✓ Development
 
-   **Variable 4: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY**
+   **Variable 4: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY** ✅
    - Key: `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
    - Value: `AIzaSyAlZf-pquN6QfRWxSVEN8MVFYTDWMVq_44`
    - Environments: ✓ Production ✓ Preview ✓ Development
@@ -118,15 +100,31 @@ You should see: `✅ Your database is now in sync with your Prisma schema`
 
 ### 7️⃣ Create Admin User (1 min)
 
-1. Visit your deployed site: `https://your-app.vercel.app/register`
-2. Create a new account with your email
-3. Go to **[Neon Console](https://console.neon.tech)**
-4. Click on your project → **SQL Editor**
-5. Run this query (replace with your email):
+**Option 1: Use Seed Script (Recommended)**
+```bash
+# Pull environment variables first
+vercel env pull .env.local
+
+# Run seed script to create admin account
+npm run db:seed
+```
+
+This creates:
+- **Email:** `admin@fireresponse.com`
+- **Password:** `Admin@123`
+- **Role:** `SUPER_ADMIN`
+
+**Option 2: Manual SQL (Alternative)**
+1. Go to **[Neon Console](https://console.neon.tech)**
+2. Click on your project → **SQL Editor**
+3. Run this query (replace with your email):
    ```sql
    UPDATE "User" SET role = 'SUPER_ADMIN' WHERE email = 'your-email@example.com';
    ```
-6. Refresh your app and log in - you should now have admin access!
+
+**⚠️ Important:** Change the default password after first login!
+
+See [ADMIN_ACCOUNT.md](./ADMIN_ACCOUNT.md) for more details.
 
 ## ✅ Testing Checklist
 

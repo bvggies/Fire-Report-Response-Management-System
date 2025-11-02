@@ -54,13 +54,14 @@ export default function RegisterPage() {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.message || 'Registration failed')
+        throw new Error(error.message || error.details || 'Registration failed')
       }
 
       toast.success('Account created successfully! Please sign in.')
       router.push('/login')
     } catch (error: any) {
-      toast.error(error.message || 'Registration failed. Please try again.')
+      console.error('Registration error:', error)
+      toast.error(error.message || 'Registration failed. Please check console for details.')
     } finally {
       setIsLoading(false)
     }

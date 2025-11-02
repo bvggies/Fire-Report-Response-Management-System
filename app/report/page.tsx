@@ -115,10 +115,18 @@ export default function ReportPage() {
       if (!response.ok) throw new Error('Failed to submit report')
 
       const result = await response.json()
-      toast.success('Report submitted successfully!')
+      const incidentId = result.id
       
-      // Redirect to track page with incident ID
-      window.location.href = `/track?id=${result.id}`
+      // Show success with ID
+      toast.success(
+        `Report submitted! Incident ID: ${incidentId.slice(0, 12)}...`,
+        { duration: 5000 }
+      )
+      
+      // Redirect to track page with the ID prominently displayed
+      setTimeout(() => {
+        window.location.href = `/track?id=${incidentId}`
+      }, 1500)
     } catch (error) {
       toast.error('Failed to submit report. Please try again.')
       console.error(error)

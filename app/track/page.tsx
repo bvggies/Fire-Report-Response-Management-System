@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Flame, MapPin, Clock, AlertCircle, CheckCircle, Loader, XCircle } from 'lucide-react'
+import { Flame, MapPin, Clock, AlertCircle, CheckCircle, Loader, XCircle, Copy } from 'lucide-react'
 import { BackgroundVectors } from '@/components/background-vectors'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { formatDate } from '@/lib/utils'
+import toast from 'react-hot-toast'
 
 type Incident = {
   id: string
@@ -73,18 +74,19 @@ export default function TrackPage() {
   }, [incidentId])
 
   const fetchIncident = async (id: string) => {
+    setLoading(true)
     try {
       const response = await fetch(`/api/incidents/${id}`)
       if (response.ok) {
         const data = await response.json()
         setIncident(data)
       } else {
-        alert('Incident not found')
+        toast.error('Incident not found. Please check your Incident ID.')
+        setLoading(false)
       }
     } catch (error) {
       console.error('Error fetching incident:', error)
-      alert('Error loading incident')
-    } finally {
+      toast.error('Error loading incident. Please try again.')
       setLoading(false)
     }
   }
@@ -114,27 +116,48 @@ export default function TrackPage() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-2xl shadow-2xl p-8"
             >
-              <h1 className="text-3xl font-bold mb-6">Track Your Report</h1>
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-bold mb-2">Track Your Report</h1>
+                <p className="text-gray-600">Enter your Incident ID to check the status</p>
+              </div>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p className="text-sm text-blue-800">
+                  <strong>Where to find your Incident ID?</strong><br />
+                  After submitting a report, you'll receive a unique Incident ID. 
+                  Check your email or the confirmation message you received.
+                </p>
+              </div>
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Incident ID
+                    Incident ID <span className="text-red-600">*</span>
                   </label>
                   <div className="flex space-x-2">
                     <input
                       type="text"
                       value={trackingId}
                       onChange={(e) => setTrackingId(e.target.value)}
-                      placeholder="Enter your incident ID"
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleTrack()
+                        }
+                      }}
+                      placeholder="Enter your incident ID (e.g., cm123abc456...)"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono text-sm"
                     />
                     <button
                       onClick={handleTrack}
-                      className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      disabled={!trackingId.trim()}
+                      className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Track
                     </button>
                   </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Don't have an ID? <Link href="/report" className="text-red-600 hover:underline">Submit a new report</Link>
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -239,7 +262,22 @@ export default function TrackPage() {
                 <label className="block text-sm font-medium text-gray-500 mb-2">
                   Incident ID
                 </label>
-                <p className="text-gray-900 font-mono text-sm bg-gray-50 p-4 rounded-lg">{incident.id}</p>
+                <div className="flex items-center space-x-2">
+                  <p className="flex-1 text-gray-900 font-mono text-sm bg-gray-50 p-4 rounded-lg">{incident.id}</p>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(incident.id)
+                      toast.success('Incident ID copied to clipboard!')
+                    }}
+                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    title="Copy Incident ID"
+                  >
+                    <Copy className="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Save this ID to track your report status anytime
+                </p>
               </div>
             </div>
 

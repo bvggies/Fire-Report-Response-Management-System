@@ -42,13 +42,14 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        toast.error('Invalid email or password')
+        toast.error(result.error === 'CredentialsSignin' ? 'Invalid email or password' : 'Login failed')
       } else {
         toast.success('Login successful!')
         router.push('/dashboard')
       }
-    } catch (error) {
-      toast.error('An error occurred. Please try again.')
+    } catch (error: any) {
+      console.error('Login error:', error)
+      toast.error(error?.message || 'An error occurred. Please check console for details.')
     } finally {
       setIsLoading(false)
     }

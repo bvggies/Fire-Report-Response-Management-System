@@ -43,10 +43,32 @@ export async function POST(request: Request) {
       { message: 'User created successfully', userId: user.id },
       { status: 201 }
     )
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration error:', error)
+    
+    // Provide more specific error messages
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        { message: 'Email already exists' },
+        { status: 400 }
+      )
+    }
+    
+    if (error?.message?.includes('prisma') || error?.message?.includes('database')) {
+      return NextResponse.json(
+        { 
+          message: 'Database connection error',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        },
+        { status: 500 }
+      )
+    }
+    
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { 
+        message: 'Internal server error',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
       { status: 500 }
     )
   }

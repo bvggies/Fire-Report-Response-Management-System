@@ -26,6 +26,12 @@ export default function HomePage() {
                 Login
               </Link>
               <Link
+                href="/track"
+                className="px-4 py-2 text-gray-700 hover:text-red-600 transition-colors"
+              >
+                Track Report
+              </Link>
+              <Link
                 href="/report"
                 className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-lg"
               >
