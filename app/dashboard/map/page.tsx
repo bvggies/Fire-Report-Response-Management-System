@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Flame, ArrowLeft, MapPin } from 'lucide-react'
@@ -21,19 +21,7 @@ export default function MapPage() {
   const [incidents, setIncidents] = useState<Incident[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
-    }
-  }, [status, router])
-
-  useEffect(() => {
-    if (session) {
-      fetchIncidents()
-    }
-  }, [session])
-
-  const fetchIncidents = async () => {
+  const fetchIncidents = useCallback(async () => {
     try {
       const response = await fetch('/api/incidents')
       if (response.ok) {
@@ -45,7 +33,19 @@ export default function MapPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login')
+    }
+  }, [status, router])
+
+  useEffect(() => {
+    if (session) {
+      fetchIncidents()
+    }
+  }, [session, fetchIncidents])
 
   const markers = incidents
     .filter((incident) => incident.latitude && incident.longitude)

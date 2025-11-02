@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Flame, ArrowLeft, Users, Building2, UserPlus, Plus, Download } from 'lucide-react'
@@ -41,21 +41,7 @@ export default function AdminPanelPage() {
   const [personnel, setPersonnel] = useState<Personnel[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
-    } else if (session?.user?.role !== 'SUPER_ADMIN') {
-      router.push('/dashboard')
-    }
-  }, [status, session, router])
-
-  useEffect(() => {
-    if (session?.user?.role === 'SUPER_ADMIN') {
-      fetchData()
-    }
-  }, [session, activeTab])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       if (activeTab === 'users') {
@@ -83,7 +69,21 @@ export default function AdminPanelPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [activeTab])
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login')
+    } else if (session?.user?.role !== 'SUPER_ADMIN') {
+      router.push('/dashboard')
+    }
+  }, [status, session, router])
+
+  useEffect(() => {
+    if (session?.user?.role === 'SUPER_ADMIN') {
+      fetchData()
+    }
+  }, [session, activeTab, fetchData])
 
   const handleExport = async () => {
     try {

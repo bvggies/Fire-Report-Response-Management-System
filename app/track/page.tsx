@@ -65,15 +65,7 @@ export default function TrackPage() {
   const [loading, setLoading] = useState(true)
   const [trackingId, setTrackingId] = useState(incidentId || '')
 
-  useEffect(() => {
-    if (incidentId) {
-      fetchIncident(incidentId)
-    } else {
-      setLoading(false)
-    }
-  }, [incidentId])
-
-  const fetchIncident = async (id: string) => {
+  const fetchIncident = useCallback(async (id: string) => {
     setLoading(true)
     try {
       const response = await fetch(`/api/incidents/${id}`)

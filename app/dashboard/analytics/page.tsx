@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Flame, ArrowLeft, BarChart3, TrendingUp, AlertTriangle, Users, Clock, CheckCircle2, Activity } from 'lucide-react'
@@ -42,6 +42,34 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await fetch('/api/analytics')
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const fetchAdminStats = useCallback(async () => {
+    try {
+      const response = await fetch('/api/analytics/admin')
+      if (response.ok) {
+        const data = await response.json()
+        setAdminStats(data)
+      }
+    } catch (error) {
+      console.error('Error fetching admin stats:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login')
@@ -59,35 +87,7 @@ export default function AnalyticsPage() {
         fetchStats()
       }
     }
-  }, [session])
-
-  const fetchStats = async () => {
-    try {
-      const response = await fetch('/api/analytics')
-      if (response.ok) {
-        const data = await response.json()
-        setStats(data)
-      }
-    } catch (error) {
-      console.error('Error fetching stats:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchAdminStats = async () => {
-    try {
-      const response = await fetch('/api/analytics/admin')
-      if (response.ok) {
-        const data = await response.json()
-        setAdminStats(data)
-      }
-    } catch (error) {
-      console.error('Error fetching admin stats:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [session, fetchStats, fetchAdminStats])
 
   if (status === 'loading' || loading) {
     return (

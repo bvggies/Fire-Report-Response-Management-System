@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { Flame, ArrowLeft, MapPin, Clock, User } from 'lucide-react'
@@ -37,13 +37,7 @@ export default function IncidentDetailPage() {
   const [incident, setIncident] = useState<Incident | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (params.id) {
-      fetchIncident(params.id as string)
-    }
-  }, [params.id])
-
-  const fetchIncident = async (id: string) => {
+  const fetchIncident = useCallback(async (id: string) => {
     try {
       setLoading(true)
       const response = await fetch(`/api/incidents/${id}`)
