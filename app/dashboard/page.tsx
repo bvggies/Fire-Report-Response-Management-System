@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Flame, LogOut, Map, Filter, Search, AlertCircle, CheckCircle, BarChart3, TrendingUp, Users, Building2, Clock } from 'lucide-react'
@@ -62,16 +62,7 @@ export default function DashboardPage() {
     }
   }, [status, router])
 
-  useEffect(() => {
-    if (session) {
-      fetchIncidents()
-      if (session.user?.role === 'ADMIN' || session.user?.role === 'SUPER_ADMIN') {
-        fetchAdminStats()
-      }
-    }
-  }, [session, statusFilter, severityFilter])
-
-  const fetchIncidents = async () => {
+  const fetchIncidents = useCallback(async () => {
     try {
       const params = new URLSearchParams()
       if (statusFilter) params.append('status', statusFilter)
@@ -88,9 +79,9 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [statusFilter, severityFilter])
 
-  const fetchAdminStats = async () => {
+  const fetchAdminStats = useCallback(async () => {
     try {
       setStatsLoading(true)
       const response = await fetch('/api/analytics/admin')
@@ -108,7 +99,16 @@ export default function DashboardPage() {
     } finally {
       setStatsLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (session) {
+      fetchIncidents()
+      if (session.user?.role === 'ADMIN' || session.user?.role === 'SUPER_ADMIN') {
+        fetchAdminStats()
+      }
+    }
+  }, [session, fetchIncidents, fetchAdminStats])
 
   const updateStatus = async (incidentId: string, newStatus: string) => {
     try {
