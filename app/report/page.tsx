@@ -28,6 +28,7 @@ const reportSchema = z.object({
 type ReportForm = z.infer<typeof reportSchema>
 
 export default function ReportPage() {
+  const router = useRouter()
   const { data: session } = useSession()
   const [location, setLocation] = useState({ lat: 0, lng: 0 })
   const [locationName, setLocationName] = useState('')
