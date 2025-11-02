@@ -175,8 +175,16 @@ export default function MyReportsPage() {
           <p className="text-sm md:text-base text-gray-600">Track the status of all your fire incident reports</p>
         </div>
 
-        {/* Statistics Cards - Show/Hide on Mobile */}
-        {stats && !statsLoading && (
+        {/* Statistics Section Header */}
+        {!statsLoading && (
+          <div className="mb-4 md:mb-6">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">📊 Your Statistics</h2>
+            <p className="text-sm md:text-base text-gray-600">Personal analytics and insights</p>
+          </div>
+        )}
+
+        {/* Statistics Cards */}
+        {!statsLoading && stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -290,7 +298,7 @@ export default function MyReportsPage() {
         )}
 
         {/* Additional Stats */}
-        {stats && !statsLoading && (
+        {!statsLoading && stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
             {stats.avgResolutionHours > 0 && (
               <motion.div

@@ -55,7 +55,6 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [severityFilter, setSeverityFilter] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState('')
-  const [showStats, setShowStats] = useState(true)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -93,13 +92,19 @@ export default function DashboardPage() {
 
   const fetchAdminStats = async () => {
     try {
+      setStatsLoading(true)
       const response = await fetch('/api/analytics/admin')
       if (response.ok) {
         const data = await response.json()
         setStats(data)
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Error fetching admin stats:', errorData)
+        toast.error('Failed to load statistics')
       }
     } catch (error) {
       console.error('Error fetching admin stats:', error)
+      toast.error('Failed to load statistics')
     } finally {
       setStatsLoading(false)
     }
@@ -159,14 +164,6 @@ export default function DashboardPage() {
                   {isAdmin ? 'Admin Dashboard' : 'User Dashboard'}
                 </span>
               </div>
-              {isAdmin && (
-                <button
-                  onClick={() => setShowStats(!showStats)}
-                  className="md:hidden p-2 rounded-lg hover:bg-gray-100"
-                >
-                  <BarChart3 className="w-5 h-5 text-gray-600" />
-                </button>
-              )}
             </div>
             <div className="flex flex-wrap items-center gap-2 md:gap-4 text-sm md:text-base">
               {session?.user?.role === 'USER' && (
@@ -216,197 +213,210 @@ export default function DashboardPage() {
       </nav>
 
       <div className="container mx-auto px-4 py-4 md:py-8">
-        {/* Admin Statistics Cards */}
-        {isAdmin && stats && !statsLoading && (showStats || window.innerWidth >= 768) && (
+        {/* Admin Statistics Cards - Always visible when data is available */}
+        {isAdmin && !statsLoading && (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-6 mb-4 md:mb-6">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Total Incidents</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.totalIncidents}</p>
-                  </div>
-                  <AlertCircle className="w-8 h-8 md:w-12 md:h-12 text-red-600 opacity-20" />
+            {stats ? (
+              <>
+                <div className="mb-4 md:mb-6">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Dashboard Analytics</h2>
+                  <p className="text-gray-600">Real-time statistics and insights</p>
                 </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Active</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.activeCount}</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 md:w-12 md:h-12 text-orange-600 opacity-20" />
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Resolved</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.resolvedCount}</p>
-                  </div>
-                  <CheckCircle className="w-8 h-8 md:w-12 md:h-12 text-green-600 opacity-20" />
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Total Users</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.totalUsers}</p>
-                  </div>
-                  <Users className="w-8 h-8 md:w-12 md:h-12 text-blue-600 opacity-20" />
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Stations</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.totalStations}</p>
-                  </div>
-                  <Building2 className="w-8 h-8 md:w-12 md:h-12 text-purple-600 opacity-20" />
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Resolution Rate</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.resolutionRate}%</p>
-                  </div>
-                  <BarChart3 className="w-8 h-8 md:w-12 md:h-12 text-indigo-600 opacity-20" />
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Admin Charts */}
-            {stats.monthlyChart.length > 0 && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-                >
-                  <h2 className="text-lg md:text-xl font-bold mb-4">Incidents Trend (6 Months)</h2>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={stats.monthlyChart}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" fontSize={12} />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="total" stroke="#ef4444" strokeWidth={2} name="Total" />
-                      <Line type="monotone" dataKey="resolved" stroke="#22c55e" strokeWidth={2} name="Resolved" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </motion.div>
-                {stats.bySeverity.length > 0 && (
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-6 mb-4 md:mb-6">
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-white rounded-lg shadow-sm p-4 md:p-6"
                   >
-                    <h2 className="text-lg md:text-xl font-bold mb-4">Incidents by Severity</h2>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <PieChart>
-                        <Pie
-                          data={stats.bySeverity}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ severity, count }) => `${severity}: ${count}`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="count"
-                        >
-                          {stats.bySeverity.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs md:text-sm text-gray-600">Total Incidents</p>
+                        <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.totalIncidents}</p>
+                      </div>
+                      <AlertCircle className="w-8 h-8 md:w-12 md:h-12 text-red-600 opacity-20" />
+                    </div>
                   </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs md:text-sm text-gray-600">Active</p>
+                        <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.activeCount}</p>
+                      </div>
+                      <TrendingUp className="w-8 h-8 md:w-12 md:h-12 text-orange-600 opacity-20" />
+                    </div>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs md:text-sm text-gray-600">Resolved</p>
+                        <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.resolvedCount}</p>
+                      </div>
+                      <CheckCircle className="w-8 h-8 md:w-12 md:h-12 text-green-600 opacity-20" />
+                    </div>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs md:text-sm text-gray-600">Total Users</p>
+                        <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.totalUsers}</p>
+                      </div>
+                      <Users className="w-8 h-8 md:w-12 md:h-12 text-blue-600 opacity-20" />
+                    </div>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs md:text-sm text-gray-600">Stations</p>
+                        <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.totalStations}</p>
+                      </div>
+                      <Building2 className="w-8 h-8 md:w-12 md:h-12 text-purple-600 opacity-20" />
+                    </div>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs md:text-sm text-gray-600">Resolution Rate</p>
+                        <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.resolutionRate}%</p>
+                      </div>
+                      <BarChart3 className="w-8 h-8 md:w-12 md:h-12 text-indigo-600 opacity-20" />
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Admin Charts */}
+                {stats.monthlyChart && stats.monthlyChart.length > 0 && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                    >
+                      <h2 className="text-lg md:text-xl font-bold mb-4">Incidents Trend (6 Months)</h2>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <LineChart data={stats.monthlyChart}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" fontSize={12} />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Line type="monotone" dataKey="total" stroke="#ef4444" strokeWidth={2} name="Total" />
+                          <Line type="monotone" dataKey="resolved" stroke="#22c55e" strokeWidth={2} name="Resolved" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </motion.div>
+                    {stats.bySeverity && stats.bySeverity.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                      >
+                        <h2 className="text-lg md:text-xl font-bold mb-4">Incidents by Severity</h2>
+                        <ResponsiveContainer width="100%" height={250}>
+                          <PieChart>
+                            <Pie
+                              data={stats.bySeverity}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              label={({ severity, count }) => `${severity}: ${count}`}
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="count"
+                            >
+                              {stats.bySeverity.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </motion.div>
+                    )}
+                  </div>
                 )}
+
+                {/* Additional Admin Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
+                  {stats.avgResolutionHours > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <Clock className="w-8 h-8 md:w-10 md:h-10 text-blue-600" />
+                        <div>
+                          <p className="text-sm md:text-base text-gray-600">Avg Resolution Time</p>
+                          <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.avgResolutionHours.toFixed(1)}h</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                  {stats.topReporters && stats.topReporters.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                    >
+                      <h3 className="text-sm md:text-base font-semibold mb-3">Top Reporters</h3>
+                      <div className="space-y-2">
+                        {stats.topReporters.slice(0, 3).map((reporter) => (
+                          <div key={reporter.reporterId} className="flex items-center justify-between">
+                            <span className="text-xs md:text-sm text-gray-600 truncate">{reporter.name}</span>
+                            <span className="text-sm md:text-base font-semibold">{reporter.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                  {stats.recentIncidents > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <TrendingUp className="w-8 h-8 md:w-10 md:h-10 text-green-600" />
+                        <div>
+                          <p className="text-sm md:text-base text-gray-600">Recent (24h)</p>
+                          <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.recentIncidents}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm p-6 md:p-8 mb-4 md:mb-6">
+                <p className="text-gray-500">Loading statistics...</p>
               </div>
             )}
-
-            {/* Additional Admin Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
-              {stats.avgResolutionHours > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-                >
-                  <div className="flex items-center space-x-3">
-                    <Clock className="w-8 h-8 md:w-10 md:h-10 text-blue-600" />
-                    <div>
-                      <p className="text-sm md:text-base text-gray-600">Avg Resolution Time</p>
-                      <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.avgResolutionHours.toFixed(1)}h</p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-              {stats.topReporters.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-                >
-                  <h3 className="text-sm md:text-base font-semibold mb-3">Top Reporters</h3>
-                  <div className="space-y-2">
-                    {stats.topReporters.slice(0, 3).map((reporter) => (
-                      <div key={reporter.reporterId} className="flex items-center justify-between">
-                        <span className="text-xs md:text-sm text-gray-600 truncate">{reporter.name}</span>
-                        <span className="text-sm md:text-base font-semibold">{reporter.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-              {stats.recentIncidents > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-                >
-                  <div className="flex items-center space-x-3">
-                    <TrendingUp className="w-8 h-8 md:w-10 md:h-10 text-green-600" />
-                    <div>
-                      <p className="text-sm md:text-base text-gray-600">Recent (24h)</p>
-                      <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.recentIncidents}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </div>
           </>
         )}
 
