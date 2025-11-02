@@ -110,7 +110,7 @@ export default function DashboardPage() {
     }
   }, [session, fetchIncidents, fetchAdminStats])
 
-  const updateStatus = async (incidentId: string, newStatus: string) => {
+  const updateStatus = useCallback(async (incidentId: string, newStatus: string) => {
     try {
       const response = await fetch(`/api/incidents/${incidentId}`, {
         method: 'PATCH',
@@ -131,7 +131,7 @@ export default function DashboardPage() {
       console.error('Error updating status:', error)
       toast.error('Failed to update status')
     }
-  }
+  }, [session, fetchIncidents, fetchAdminStats])
 
   const filteredIncidents = incidents.filter((incident) =>
     incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
