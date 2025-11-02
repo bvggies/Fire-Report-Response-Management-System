@@ -616,7 +616,9 @@ export default function AdminPanelPage() {
                 >
                   <option value="USER">User</option>
                   <option value="ADMIN">Admin</option>
-                  <option value="SUPER_ADMIN">Super Admin</option>
+                  {session?.user?.role === 'SUPER_ADMIN' && (
+                    <option value="SUPER_ADMIN">Super Admin</option>
+                  )}
                 </select>
               </div>
               <div>

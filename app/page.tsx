@@ -1,11 +1,36 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Flame, Shield, MapPin, TrendingUp } from 'lucide-react'
 import { BackgroundVectors } from '@/components/background-vectors'
 import { motion } from 'framer-motion'
 
+type HomePageContent = {
+  key: string
+  title?: string | null
+  content: string
+}
+
 export default function HomePage() {
+  const [content, setContent] = useState<Record<string, HomePageContent>>({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/homepage')
+      .then((res) => res.json())
+      .then((data) => {
+        setContent(data)
+      })
+      .catch((err) => {
+        console.error('Error loading homepage content:', err)
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  const getContent = (key: string, defaultValue: string) => {
+    return content[key]?.content || defaultValue
+  }
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50">
       <BackgroundVectors />
