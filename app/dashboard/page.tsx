@@ -112,26 +112,33 @@ export default function DashboardPage() {
           // Track incidents by ID for better detection
           const currentIncidentIds = new Set<string>(data.map((inc: Incident) => inc.id))
           
-          if (lastIncidentIds.size > 0) {
-            // Find new incidents (IDs that weren't in the last set)
-            const newIncidentIds = Array.from<string>(currentIncidentIds).filter(
-              (id) => !lastIncidentIds.has(id)
-            )
-            
-            if (newIncidentIds.length > 0) {
-              // New incident(s) detected!
-              playAlarm()
-              toast.success(`🚨 ${newIncidentIds.length} new incident${newIncidentIds.length > 1 ? 's' : ''} reported!`, {
-                duration: 5000,
-                icon: '🚨',
-              })
+          // Use functional update to avoid dependency issues
+          setLastIncidentIds(prev => {
+            if (prev.size > 0) {
+              // Find new incidents (IDs that weren't in the last set)
+              const newIncidentIds = Array.from<string>(currentIncidentIds).filter(
+                (id) => !prev.has(id)
+              )
+              
+              if (newIncidentIds.length > 0) {
+                // New incident(s) detected!
+                playAlarm()
+                toast.success(`🚨 ${newIncidentIds.length} new incident${newIncidentIds.length > 1 ? 's' : ''} reported!`, {
+                  duration: 5000,
+                  icon: '🚨',
+                })
+              }
             }
-          }
-          
-          setLastIncidentIds(currentIncidentIds)
-        } else if (isAdmin && incidents.length === 0 && data.length > 0) {
-          // First load - initialize the set
-          setLastIncidentIds(new Set<string>(data.map((inc: Incident) => inc.id)))
+            return currentIncidentIds
+          })
+        } else if (isAdmin && data.length > 0) {
+          // Initialize the set on first load (only if empty)
+          setLastIncidentIds(prev => {
+            if (prev.size === 0) {
+              return new Set<string>(data.map((inc: Incident) => inc.id))
+            }
+            return prev
+          })
         }
         
         setIncidents(data)
@@ -142,7 +149,9 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, severityFilter, lastIncidentIds, beepEnabled, session, playAlarm, incidents.length])
+    // Only include stable dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, severityFilter, beepEnabled, session?.user?.role, playAlarm])
 
   const fetchAdminStats = useCallback(async () => {
     try {
@@ -164,6 +173,7 @@ export default function DashboardPage() {
     }
   }, [])
 
+  // Initial load - only run once when session is available
   useEffect(() => {
     if (session) {
       fetchIncidents()
@@ -171,15 +181,17 @@ export default function DashboardPage() {
         fetchAdminStats()
       }
     }
-  }, [session, fetchIncidents, fetchAdminStats])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id])
 
   // Refetch incidents when filters change
   useEffect(() => {
-    if (session && (statusFilter || severityFilter)) {
+    if (session) {
       setLoading(true)
       fetchIncidents()
     }
-  }, [statusFilter, severityFilter, session, fetchIncidents])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, severityFilter, session?.user?.id])
 
   // Poll for new incidents and refresh analytics (only for admins)
   useEffect(() => {
@@ -187,13 +199,14 @@ export default function DashboardPage() {
     
     if (!isAdmin || !session) return
 
-    // Initial setup after first load - wait for incidents to be loaded
+    // Initial setup after first load - wait for incidents to be loaded (only once)
     if (incidents.length > 0 && lastIncidentIds.size === 0) {
       setLastIncidentIds(new Set<string>(incidents.map(inc => inc.id)))
     }
 
     // Poll every 2 seconds for new incidents (more frequent for immediate detection)
     const incidentInterval = setInterval(() => {
+      // Only fetch if no filters are active
       if (!statusFilter && !severityFilter) {
         fetchIncidents()
       }
@@ -208,7 +221,9 @@ export default function DashboardPage() {
       clearInterval(incidentInterval)
       clearInterval(statsInterval)
     }
-  }, [session, incidents.length, lastIncidentIds.size, statusFilter, severityFilter, fetchIncidents, fetchAdminStats])
+    // Only depend on session and filter values - not on function references or changing state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.role, statusFilter, severityFilter])
 
   const updateStatus = useCallback(async (incidentId: string, newStatus: string) => {
     try {

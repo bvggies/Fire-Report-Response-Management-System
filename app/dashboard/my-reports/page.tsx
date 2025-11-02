@@ -97,12 +97,14 @@ export default function MyReportsPage() {
     }
   }, [])
 
+  // Initial load - only run once when session is available
   useEffect(() => {
     if (session) {
       fetchMyReports()
       fetchUserStats()
     }
-  }, [session, fetchMyReports, fetchUserStats])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id])
 
   // Refresh stats periodically (every 30 seconds) to catch status updates
   useEffect(() => {
@@ -113,7 +115,8 @@ export default function MyReportsPage() {
     }, 30000) // Refresh every 30 seconds
 
     return () => clearInterval(interval)
-  }, [session, fetchUserStats])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id])
 
   const filteredIncidents = incidents.filter((incident) =>
     incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
