@@ -184,9 +184,24 @@ export default function IncidentDetailPage() {
                 <label className="block text-sm font-medium text-gray-500 mb-1">
                   Location
                 </label>
-                <div className="flex items-center space-x-2">
-                  <MapPin className="w-5 h-5 text-gray-400" />
-                  <p className="text-gray-900 font-medium">{incident.location}</p>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center space-x-2 flex-1 min-w-0">
+                    <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <p className="text-gray-900 font-medium">{incident.location}</p>
+                  </div>
+                  {incident.latitude && incident.longitude && (
+                    <a
+                      href={`https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm whitespace-nowrap"
+                      title="Open in Google Maps"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      <span>Open in Maps</span>
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
                 </div>
                 {incident.latitude && incident.longitude && (
                   <p className="mt-2 text-xs text-gray-500">
