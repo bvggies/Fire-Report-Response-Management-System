@@ -45,7 +45,28 @@ export default function LoginPage() {
         toast.error(result.error === 'CredentialsSignin' ? 'Invalid email or password' : 'Login failed')
       } else {
         toast.success('Login successful!')
-        router.push('/dashboard')
+        
+        // Wait a moment for session to be set, then fetch and redirect
+        setTimeout(async () => {
+          try {
+            const userResponse = await fetch('/api/auth/session')
+            const sessionData = await userResponse.json()
+            
+            // Determine redirect based on role
+            if (sessionData?.user?.role === 'USER') {
+              window.location.href = '/dashboard/my-reports'
+            } else if (sessionData?.user?.role === 'ADMIN' || sessionData?.user?.role === 'SUPER_ADMIN') {
+              window.location.href = '/dashboard'
+            } else {
+              // Fallback to dashboard if role is not determined
+              window.location.href = '/dashboard'
+            }
+          } catch (error) {
+            // If session fetch fails, default to dashboard
+            console.error('Error fetching session:', error)
+            window.location.href = '/dashboard'
+          }
+        }, 500) // Small delay to ensure session cookie is set
       }
     } catch (error: any) {
       console.error('Login error:', error)

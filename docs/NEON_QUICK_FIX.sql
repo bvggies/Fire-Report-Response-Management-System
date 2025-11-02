@@ -2,6 +2,21 @@
 -- Copy and run each section separately in Neon SQL Editor
 
 -- ============================================
+-- STEP 0: Create ENUM Types (REQUIRED!)
+-- ============================================
+DO $$ BEGIN
+  CREATE TYPE "UserRole" AS ENUM ('USER', 'ADMIN', 'SUPER_ADMIN');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "IncidentStatus" AS ENUM ('RECEIVED', 'DISPATCHED', 'ON_WAY', 'ARRIVED', 'IN_PROGRESS', 'RESOLVED', 'FALSE_ALARM');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "IncidentSeverity" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+-- ============================================
 -- STEP 1: Create User table
 -- ============================================
 CREATE TABLE IF NOT EXISTS "User" (
@@ -10,7 +25,7 @@ CREATE TABLE IF NOT EXISTS "User" (
   "name" TEXT,
   "password" TEXT NOT NULL,
   "phone" TEXT,
-  "role" TEXT NOT NULL DEFAULT 'USER',
+  "role" "UserRole" NOT NULL DEFAULT 'USER',
   "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -28,8 +43,8 @@ CREATE TABLE IF NOT EXISTS "Incident" (
   "latitude" DOUBLE PRECISION,
   "longitude" DOUBLE PRECISION,
   "description" TEXT NOT NULL,
-  "severity" TEXT NOT NULL DEFAULT 'MEDIUM',
-  "status" TEXT NOT NULL DEFAULT 'RECEIVED',
+  "severity" "IncidentSeverity" NOT NULL DEFAULT 'MEDIUM',
+  "status" "IncidentStatus" NOT NULL DEFAULT 'RECEIVED',
   "photos" TEXT[] DEFAULT ARRAY[]::TEXT[],
   "videos" TEXT[] DEFAULT ARRAY[]::TEXT[],
   "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

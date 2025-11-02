@@ -106,8 +106,14 @@ export default function DashboardPage() {
             <div className="flex items-center space-x-2">
               <Flame className="w-8 h-8 text-red-600" />
               <span className="text-2xl font-bold text-gray-900">FireResponse</span>
-              <span className="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">
-                Admin Dashboard
+              <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+                session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
+                  ? 'bg-red-100 text-red-800'
+                  : 'bg-blue-100 text-blue-800'
+              }`}>
+                {session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
+                  ? 'Admin Dashboard'
+                  : 'User Dashboard'}
               </span>
             </div>
             <div className="flex items-center space-x-4">
@@ -164,19 +170,31 @@ export default function DashboardPage() {
               <option value="HIGH">High</option>
               <option value="CRITICAL">Critical</option>
             </select>
-            <button
-              onClick={() => router.push('/dashboard/map')}
-              className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              <Map className="w-5 h-5" />
-              <span>View Map</span>
-            </button>
-            <button
-              onClick={() => router.push('/dashboard/analytics')}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <span>Analytics</span>
-            </button>
+            {session?.user?.role === 'USER' && (
+              <button
+                onClick={() => router.push('/dashboard/my-reports')}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <span>My Reports</span>
+              </button>
+            )}
+            {(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') && (
+              <>
+                <button
+                  onClick={() => router.push('/dashboard/map')}
+                  className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  <Map className="w-5 h-5" />
+                  <span>View Map</span>
+                </button>
+                <button
+                  onClick={() => router.push('/dashboard/analytics')}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <span>Analytics</span>
+                </button>
+              </>
+            )}
             {session?.user?.role === 'SUPER_ADMIN' && (
               <button
                 onClick={() => router.push('/dashboard/admin')}
@@ -224,19 +242,29 @@ export default function DashboardPage() {
                       <div className="text-sm text-gray-500 truncate max-w-xs">{incident.description}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <select
-                        value={incident.status}
-                        onChange={(e) => updateStatus(incident.id, e.target.value)}
-                        className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      >
-                        <option value="RECEIVED">Received</option>
-                        <option value="DISPATCHED">Dispatched</option>
-                        <option value="ON_WAY">On the Way</option>
-                        <option value="ARRIVED">Arrived</option>
-                        <option value="IN_PROGRESS">In Progress</option>
-                        <option value="RESOLVED">Resolved</option>
-                        <option value="FALSE_ALARM">False Alarm</option>
-                      </select>
+                      {(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') ? (
+                        <select
+                          value={incident.status}
+                          onChange={(e) => updateStatus(incident.id, e.target.value)}
+                          className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        >
+                          <option value="RECEIVED">Received</option>
+                          <option value="DISPATCHED">Dispatched</option>
+                          <option value="ON_WAY">On the Way</option>
+                          <option value="ARRIVED">Arrived</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="RESOLVED">Resolved</option>
+                          <option value="FALSE_ALARM">False Alarm</option>
+                        </select>
+                      ) : (
+                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                          incident.status === 'RESOLVED' ? 'bg-green-100 text-green-800' :
+                          incident.status === 'IN_PROGRESS' || incident.status === 'ON_WAY' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {incident.status.replace('_', ' ')}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-3 py-1 text-xs font-medium rounded-full ${
