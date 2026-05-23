@@ -122,7 +122,7 @@ export default function AnalyticsPage() {
             description="Aggregated metrics across all incidents and users"
           />
 
-          <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+          <div className="mb-8 grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 2xl:grid-cols-6">
             <StatCard label="Total incidents" value={adminStats.totalIncidents} icon={AlertCircle} accent="red" />
             <StatCard label="Active" value={adminStats.activeCount} icon={Activity} accent="orange" delay={0.05} />
             <StatCard label="Resolved" value={adminStats.resolvedCount} icon={CheckCircle} accent="green" delay={0.1} />
@@ -261,7 +261,7 @@ export default function AnalyticsPage() {
             title="Report analytics"
             description="Statistics for all incidents in the system"
           />
-          <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="mb-8 grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
             <StatCard label="Total" value={stats.total} icon={AlertCircle} accent="red" />
             <StatCard label="Last 24h" value={stats.recent} icon={TrendingUp} accent="green" delay={0.05} />
             <StatCard

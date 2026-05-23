@@ -358,7 +358,7 @@ export default function DashboardPage() {
   const dashboardContent = (
     <>
         {isAdmin && statsLoading && (
-          <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+          <div className="mb-8 grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 2xl:grid-cols-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-200/80" />
             ))}
@@ -381,7 +381,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
 
-                <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+                <div className="mb-8 grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 2xl:grid-cols-6">
                   <StatCard label="Total incidents" value={stats.totalIncidents ?? 0} icon={AlertCircle} accent="red" />
                   <StatCard label="Active" value={stats.activeCount ?? 0} icon={Activity} accent="orange" delay={0.05} />
                   <StatCard label="Resolved" value={stats.resolvedCount ?? 0} icon={CheckCircle} accent="green" delay={0.1} />

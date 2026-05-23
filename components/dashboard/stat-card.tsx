@@ -11,6 +11,7 @@ type StatCardProps = {
   accent: 'red' | 'orange' | 'green' | 'blue' | 'purple' | 'indigo' | 'amber'
   delay?: number
   subtitle?: string
+  compact?: boolean
 }
 
 const accentStyles = {
@@ -58,7 +59,15 @@ const accentStyles = {
   },
 }
 
-export function StatCard({ label, value, icon: Icon, accent, delay = 0, subtitle }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  icon: Icon,
+  accent,
+  delay = 0,
+  subtitle,
+  compact = false,
+}: StatCardProps) {
   const styles = accentStyles[accent]
 
   return (
@@ -67,32 +76,43 @@ export function StatCard({ label, value, icon: Icon, accent, delay = 0, subtitle
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        'group relative overflow-hidden rounded-2xl border bg-gradient-to-br p-5 shadow-sm transition-shadow hover:shadow-md md:p-6',
+        'flex h-full min-w-0 flex-col rounded-2xl border bg-gradient-to-br shadow-sm transition-shadow hover:shadow-md',
+        compact ? 'p-4' : 'p-5 md:p-6',
         styles.card
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <p
-          className={cn(
-            'min-w-0 flex-1 pr-1 text-[10px] font-semibold uppercase leading-snug tracking-wide sm:text-xs md:text-sm',
-            styles.label
-          )}
-        >
-          {label}
-        </p>
-        <div
-          className={cn(
-            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 md:h-11 md:w-11',
-            styles.icon
-          )}
-        >
-          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-        </div>
+      <div
+        className={cn(
+          'mb-3 flex shrink-0 items-center justify-center rounded-xl',
+          compact ? 'h-9 w-9' : 'h-10 w-10',
+          styles.icon
+        )}
+      >
+        <Icon className={cn(compact ? 'h-4 w-4' : 'h-5 w-5')} />
       </div>
-      <p className={cn('mt-3 text-xl font-bold leading-none tracking-tight sm:text-2xl md:text-3xl', styles.value)}>
+
+      <p
+        className={cn(
+          'mb-1 text-[10px] font-semibold uppercase leading-snug tracking-wide sm:text-xs',
+          styles.label
+        )}
+      >
+        {label}
+      </p>
+
+      <p
+        className={cn(
+          'break-words text-xl font-bold leading-tight tracking-tight sm:text-2xl',
+          !compact && 'md:text-3xl',
+          styles.value
+        )}
+      >
         {value}
       </p>
-      {subtitle && <p className="mt-1.5 text-[11px] leading-snug text-slate-500 sm:text-xs">{subtitle}</p>}
+
+      {subtitle && (
+        <p className="mt-1.5 text-[11px] leading-snug text-slate-500 sm:text-xs">{subtitle}</p>
+      )}
     </motion.div>
   )
 }
