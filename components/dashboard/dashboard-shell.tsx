@@ -272,10 +272,15 @@ export function DashboardShell({
   )
 }
 
+export type AdminLayoutProps = Omit<DashboardShellProps, 'variant' | 'title' | 'subtitle'> & {
+  title?: string
+  subtitle?: string
+}
+
 export function AdminLayout({
   title = 'Operations Dashboard',
   subtitle = 'Monitor incidents and coordinate response in real time',
   ...props
-}: Omit<DashboardShellProps, 'variant'>) {
+}: AdminLayoutProps) {
   return <DashboardShell variant="admin" title={title} subtitle={subtitle} {...props} />
 }
