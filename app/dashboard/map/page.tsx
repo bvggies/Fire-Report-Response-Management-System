@@ -114,7 +114,7 @@ export default function MapPage() {
         description="Markers are color-coded by severity. Click an incident below for full details."
       />
 
-      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mb-6 grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <StatCard label="On map" value={markers.length} icon={MapPin} accent="red" />
         <StatCard label="Active" value={activeCount} icon={Activity} accent="orange" delay={0.05} />
         <StatCard label="Critical" value={criticalCount} icon={AlertCircle} accent="red" delay={0.1} />
@@ -128,59 +128,68 @@ export default function MapPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
-        <div className="xl:col-span-3">
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-            <div className="border-b border-slate-100 px-5 py-3">
-              <p className="text-sm font-semibold text-slate-900">Interactive map</p>
-              <p className="text-xs text-slate-500">Pan and zoom to explore incident clusters</p>
-            </div>
-            <GoogleMap markers={markers} height="min(70vh, 640px)" />
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-6">
+        {/* Map — primary column */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm lg:min-h-[520px]">
+          <div className="shrink-0 border-b border-slate-100 px-4 py-3 sm:px-5">
+            <p className="text-sm font-semibold text-slate-900">Interactive map</p>
+            <p className="text-xs text-slate-500">Pan and zoom to explore incident clusters</p>
+          </div>
+          <div className="relative min-h-[280px] flex-1 sm:min-h-[360px] lg:min-h-[460px]">
+            <GoogleMap markers={markers} fillParent mapClassName="rounded-none" />
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-            <h3 className="mb-4 text-sm font-bold text-slate-900">Severity legend</h3>
-            <ul className="space-y-3">
+        {/* Sidebar — fixed width on desktop, full width on mobile */}
+        <aside className="flex w-full shrink-0 flex-col gap-4 lg:w-72 xl:w-80">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+            <h3 className="mb-3 text-sm font-bold text-slate-900">Severity legend</h3>
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-2.5 sm:grid-cols-1 sm:gap-y-3">
               {LEGEND.map((item) => (
-                <li key={item.severity} className="flex items-center gap-3 text-sm text-slate-600">
-                  <span className={cn('h-3 w-3 rounded-full ring-2 ring-white shadow', item.color)} />
-                  {item.label}
+                <li key={item.severity} className="flex items-center gap-2.5 text-sm text-slate-600">
+                  <span className={cn('h-3 w-3 shrink-0 rounded-full ring-2 ring-white shadow', item.color)} />
+                  <span className="truncate">{item.label}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-            <h3 className="mb-3 text-sm font-bold text-slate-900">Recent on map</h3>
-            {markers.length === 0 ? (
-              <p className="text-sm text-slate-500">No incidents with GPS data yet.</p>
-            ) : (
-              <ul className="max-h-80 space-y-2 overflow-y-auto">
-                {incidents
-                  .filter((i) => i.latitude && i.longitude)
-                  .slice(0, 8)
-                  .map((incident) => (
-                    <li key={incident.id}>
-                      <Link
-                        href={`/dashboard/incidents/${incident.id}`}
-                        className="flex items-start gap-2 rounded-xl bg-slate-50 p-3 transition hover:bg-slate-100"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-slate-900">{incident.location}</p>
-                          <div className="mt-1.5">
-                            <SeverityBadge severity={incident.severity} />
+          <div className="flex min-h-[200px] flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm lg:min-h-0 lg:max-h-[calc(520px-8rem)]">
+            <div className="shrink-0 border-b border-slate-100 px-4 py-3 sm:px-5">
+              <h3 className="text-sm font-bold text-slate-900">On map</h3>
+              <p className="text-xs text-slate-500">{markers.length} with GPS coordinates</p>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
+              {markers.length === 0 ? (
+                <p className="py-6 text-center text-sm text-slate-500">No incidents with GPS data yet.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {incidents
+                    .filter((i) => i.latitude && i.longitude)
+                    .slice(0, 12)
+                    .map((incident) => (
+                      <li key={incident.id}>
+                        <Link
+                          href={`/dashboard/incidents/${incident.id}`}
+                          className="flex items-center gap-2 rounded-xl border border-transparent bg-slate-50 p-3 transition hover:border-slate-200 hover:bg-slate-100"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="line-clamp-2 text-sm font-medium leading-snug text-slate-900">
+                              {incident.location}
+                            </p>
+                            <div className="mt-2">
+                              <SeverityBadge severity={incident.severity} />
+                            </div>
                           </div>
-                        </div>
-                        <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-                      </Link>
-                    </li>
-                  ))}
-              </ul>
-            )}
+                          <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+                        </Link>
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
           </div>
-        </div>
+        </aside>
       </div>
     </AdminLayout>
   )

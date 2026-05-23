@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Search, AlertCircle, CheckCircle, BarChart3, TrendingUp, Users, Building2, Clock, MapPin, ChevronRight, Activity } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { Search, AlertCircle, CheckCircle, BarChart3, TrendingUp, Users, Building2, Clock, MapPin, ChevronRight, Activity, Filter, X } from 'lucide-react'
+import { formatDate, cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
@@ -55,6 +55,19 @@ const chartTooltipStyle = {
   fontSize: 13,
 }
 
+type QueueFilter = 'active' | 'all' | 'resolved' | 'critical'
+type DateFilter = 'all' | 'today' | '7days'
+type SortBy = 'newest' | 'oldest' | 'severity'
+
+const SEVERITY_ORDER: Record<string, number> = {
+  CRITICAL: 0,
+  HIGH: 1,
+  MEDIUM: 2,
+  LOW: 3,
+}
+
+const isActiveStatus = (status: string) => status !== 'RESOLVED' && status !== 'FALSE_ALARM'
+
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -65,6 +78,9 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [severityFilter, setSeverityFilter] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [queueFilter, setQueueFilter] = useState<QueueFilter>('active')
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all')
+  const [sortBy, setSortBy] = useState<SortBy>('newest')
   const [lastIncidentIds, setLastIncidentIds] = useState<Set<string>>(new Set())
   const [isBeeping, setIsBeeping] = useState(false)
   const [beepEnabled, setBeepEnabled] = useState(true)
@@ -129,7 +145,7 @@ export default function DashboardPage() {
         
         // Check for new incidents (only if we're monitoring and not filtering)
         const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
-        if (isAdmin && beepEnabled && !statusFilter && !severityFilter) {
+        if (isAdmin && beepEnabled && !statusFilter && !severityFilter && queueFilter === 'active' && dateFilter === 'all' && !searchTerm) {
           // Track incidents by ID for better detection
           const currentIncidentIds = new Set<string>(data.map((inc: Incident) => inc.id))
           
@@ -231,7 +247,7 @@ export default function DashboardPage() {
     // Poll every 2 seconds for new incidents (more frequent for immediate detection)
     const incidentInterval = setInterval(() => {
       // Only fetch if no filters are active
-      if (!statusFilter && !severityFilter) {
+      if (!statusFilter && !severityFilter && queueFilter === 'active' && dateFilter === 'all' && !searchTerm) {
         fetchIncidents()
       }
     }, 2000) // Check every 2 seconds for faster detection
@@ -247,7 +263,25 @@ export default function DashboardPage() {
     }
     // Only depend on session and filter values - not on function references or changing state
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.role, statusFilter, severityFilter])
+  }, [session?.user?.role, statusFilter, severityFilter, queueFilter, dateFilter, searchTerm])
+
+  const clearIncidentFilters = () => {
+    setSearchTerm('')
+    setStatusFilter('')
+    setSeverityFilter('')
+    setQueueFilter('active')
+    setDateFilter('all')
+    setSortBy('newest')
+    setLoading(true)
+  }
+
+  const hasCustomFilters =
+    searchTerm !== '' ||
+    statusFilter !== '' ||
+    severityFilter !== '' ||
+    queueFilter !== 'active' ||
+    dateFilter !== 'all' ||
+    sortBy !== 'newest'
 
   const updateStatus = useCallback(async (incidentId: string, newStatus: string) => {
     try {
@@ -274,20 +308,46 @@ export default function DashboardPage() {
     }
   }, [session, fetchIncidents, fetchAdminStats])
 
-  // Apply all filters - note: statusFilter and severityFilter are already applied server-side
-  // We only need to apply searchTerm filter client-side
-  const filteredIncidents = incidents.filter((incident) => {
-    const matchesSearch = searchTerm === '' || 
-      incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      incident.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      incident.id.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    // Double-check status filter (in case filter wasn't applied server-side)
-    const matchesStatus = !statusFilter || incident.status === statusFilter
-    const matchesSeverity = !severityFilter || incident.severity === severityFilter
-    
-    return matchesSearch && matchesStatus && matchesSeverity
-  })
+  const filteredIncidents = useMemo(() => {
+    const now = new Date()
+    const weekAgo = new Date(now)
+    weekAgo.setDate(weekAgo.getDate() - 7)
+
+    const filtered = incidents.filter((incident) => {
+      const matchesSearch =
+        searchTerm === '' ||
+        incident.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        incident.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        incident.id.toLowerCase().includes(searchTerm.toLowerCase())
+
+      const matchesStatus = !statusFilter || incident.status === statusFilter
+      const matchesSeverity = !severityFilter || incident.severity === severityFilter
+
+      const matchesQueue =
+        queueFilter === 'all' ||
+        (queueFilter === 'active' && isActiveStatus(incident.status)) ||
+        (queueFilter === 'resolved' && incident.status === 'RESOLVED') ||
+        (queueFilter === 'critical' && incident.severity === 'CRITICAL')
+
+      const created = new Date(incident.createdAt)
+      const matchesDate =
+        dateFilter === 'all' ||
+        (dateFilter === 'today' && created.toDateString() === now.toDateString()) ||
+        (dateFilter === '7days' && created >= weekAgo)
+
+      return matchesSearch && matchesStatus && matchesSeverity && matchesQueue && matchesDate
+    })
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'newest') {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      }
+      if (sortBy === 'oldest') {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      }
+      return (SEVERITY_ORDER[a.severity] ?? 9) - (SEVERITY_ORDER[b.severity] ?? 9)
+    })
+  }, [incidents, searchTerm, statusFilter, severityFilter, queueFilter, dateFilter, sortBy])
 
   const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
 
@@ -298,7 +358,7 @@ export default function DashboardPage() {
   const dashboardContent = (
     <>
         {isAdmin && statsLoading && (
-          <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+          <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-200/80" />
             ))}
@@ -321,7 +381,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
 
-                <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+                <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
                   <StatCard label="Total incidents" value={stats.totalIncidents ?? 0} icon={AlertCircle} accent="red" />
                   <StatCard label="Active" value={stats.activeCount ?? 0} icon={Activity} accent="orange" delay={0.05} />
                   <StatCard label="Resolved" value={stats.resolvedCount ?? 0} icon={CheckCircle} accent="green" delay={0.1} />
@@ -453,18 +513,79 @@ export default function DashboardPage() {
           </>
         )}
 
-        <div className="mb-6">
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Incidents</p>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900">Active queue</h2>
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Incidents</p>
+            <h2 className="text-xl font-bold tracking-tight text-slate-900">Active queue</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Showing {filteredIncidents.length} of {incidents.length} incident{incidents.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          {hasCustomFilters && (
+            <button
+              type="button"
+              onClick={clearIncidentFilters}
+              className="inline-flex items-center gap-1.5 self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 sm:self-auto"
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear filters
+            </button>
+          )}
         </div>
 
         <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm md:p-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <div className="relative flex-1">
+          <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <Filter className="h-4 w-4 text-red-500" />
+            Filters
+          </div>
+
+          <div className="mb-4 flex flex-wrap gap-2">
+            {(
+              [
+                { id: 'active' as const, label: 'Active only' },
+                { id: 'all' as const, label: 'All' },
+                { id: 'critical' as const, label: 'Critical' },
+                { id: 'resolved' as const, label: 'Resolved' },
+              ] as const
+            ).map((chip) => (
+              <button
+                key={chip.id}
+                type="button"
+                onClick={() => {
+                  const hadServerFilter = statusFilter !== '' || severityFilter !== ''
+                  setQueueFilter(chip.id)
+                  if (chip.id === 'critical') {
+                    setSeverityFilter('CRITICAL')
+                    setStatusFilter('')
+                    setLoading(true)
+                  } else if (chip.id === 'resolved') {
+                    setStatusFilter('RESOLVED')
+                    setSeverityFilter('')
+                    setLoading(true)
+                  } else {
+                    setStatusFilter('')
+                    setSeverityFilter('')
+                    if (hadServerFilter) setLoading(true)
+                  }
+                }}
+                className={cn(
+                  'rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all',
+                  queueFilter === chip.id
+                    ? 'bg-slate-900 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                )}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="relative sm:col-span-2 lg:col-span-3 xl:col-span-2">
               <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by location, description, or ID…"
+                placeholder="Search location, description, ID…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-red-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20"
@@ -474,9 +595,10 @@ export default function DashboardPage() {
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value)
+                setQueueFilter('all')
                 setLoading(true)
               }}
-              className="rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-700 focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+              className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-700 focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500/20"
             >
               <option value="">All statuses</option>
               <option value="RECEIVED">Received</option>
@@ -485,20 +607,40 @@ export default function DashboardPage() {
               <option value="ARRIVED">Arrived</option>
               <option value="IN_PROGRESS">In Progress</option>
               <option value="RESOLVED">Resolved</option>
+              <option value="FALSE_ALARM">False Alarm</option>
             </select>
             <select
               value={severityFilter}
               onChange={(e) => {
                 setSeverityFilter(e.target.value)
+                if (e.target.value) setQueueFilter('all')
                 setLoading(true)
               }}
-              className="rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-700 focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+              className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-700 focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500/20"
             >
               <option value="">All severities</option>
               <option value="LOW">Low</option>
               <option value="MEDIUM">Medium</option>
               <option value="HIGH">High</option>
               <option value="CRITICAL">Critical</option>
+            </select>
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+              className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-700 focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+            >
+              <option value="all">All dates</option>
+              <option value="today">Today</option>
+              <option value="7days">Last 7 days</option>
+            </select>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-700 focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+            >
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="severity">Highest severity</option>
             </select>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Search, FileText, Calendar, MapPin, AlertCircle, BarChart3, TrendingUp, Clock, CheckCircle2 } from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { DashboardLoadingScreen } from '@/components/dashboard/loading-screen'
+import { StatCard } from '@/components/dashboard/stat-card'
 import { formatDate } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -172,62 +173,11 @@ export default function MyReportsPage() {
             </div>
           </div>
         ) : stats ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-red-200"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs md:text-sm text-red-700 font-medium">Total Reports</p>
-                  <p className="text-2xl md:text-4xl font-bold text-red-900 mt-1 md:mt-2">{stats.totalReports ?? 0}</p>
-                </div>
-                <FileText className="w-10 h-10 md:w-14 md:h-14 text-red-600 opacity-40" />
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-orange-200"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs md:text-sm text-orange-700 font-medium">Active</p>
-                  <p className="text-2xl md:text-4xl font-bold text-orange-900 mt-1 md:mt-2">{stats.activeCount ?? 0}</p>
-                </div>
-                <AlertCircle className="w-10 h-10 md:w-14 md:h-14 text-orange-600 opacity-40" />
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-green-200"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs md:text-sm text-green-700 font-medium">Resolved</p>
-                  <p className="text-2xl md:text-4xl font-bold text-green-900 mt-1 md:mt-2">{stats.resolvedCount ?? 0}</p>
-                </div>
-                <CheckCircle2 className="w-10 h-10 md:w-14 md:h-14 text-green-600 opacity-40" />
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-blue-200"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs md:text-sm text-blue-700 font-medium">Recent (7d)</p>
-                  <p className="text-2xl md:text-4xl font-bold text-blue-900 mt-1 md:mt-2">{stats.recentReports ?? 0}</p>
-                </div>
-                <TrendingUp className="w-10 h-10 md:w-14 md:h-14 text-blue-600 opacity-40" />
-              </div>
-            </motion.div>
+          <div className="mb-4 grid grid-cols-2 gap-4 md:mb-6 md:grid-cols-4">
+            <StatCard label="Total reports" value={stats.totalReports ?? 0} icon={FileText} accent="red" />
+            <StatCard label="Active" value={stats.activeCount ?? 0} icon={AlertCircle} accent="orange" delay={0.05} />
+            <StatCard label="Resolved" value={stats.resolvedCount ?? 0} icon={CheckCircle2} accent="green" delay={0.1} />
+            <StatCard label="Recent (7d)" value={stats.recentReports ?? 0} icon={TrendingUp} accent="blue" delay={0.15} />
           </div>
         ) : (
           <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 md:p-6 mb-4 md:mb-6">

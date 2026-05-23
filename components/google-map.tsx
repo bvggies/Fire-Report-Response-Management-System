@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Loader } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 declare global {
   interface Window {
@@ -23,9 +24,19 @@ type GoogleMapProps = {
   center?: { lat: number; lng: number }
   zoom?: number
   height?: string
+  mapClassName?: string
+  /** Fill a relatively positioned parent (parent must set min-height) */
+  fillParent?: boolean
 }
 
-export function GoogleMap({ markers = [], center, zoom = 12, height = '600px' }: GoogleMapProps) {
+export function GoogleMap({
+  markers = [],
+  center,
+  zoom = 12,
+  height = '600px',
+  mapClassName,
+  fillParent = false,
+}: GoogleMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
@@ -140,7 +151,17 @@ export function GoogleMap({ markers = [], center, zoom = 12, height = '600px' }:
     )
   }
 
-  return <div ref={mapRef} style={{ height, width: '100%' }} className="rounded-lg" />
+  return (
+    <div
+      ref={mapRef}
+      style={fillParent ? undefined : { height, width: '100%' }}
+      className={cn(
+        fillParent ? 'absolute inset-0 h-full w-full' : 'w-full',
+        'rounded-lg',
+        mapClassName
+      )}
+    />
+  )
 }
 
 export function GoogleMapScript() {

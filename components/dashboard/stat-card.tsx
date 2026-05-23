@@ -71,18 +71,28 @@ export function StatCard({ label, value, icon: Icon, accent, delay = 0, subtitle
         styles.card
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className={cn('text-xs font-semibold uppercase tracking-wider md:text-sm', styles.label)}>
-            {label}
-          </p>
-          <p className={cn('mt-2 text-2xl font-bold tracking-tight md:text-3xl', styles.value)}>{value}</p>
-          {subtitle && <p className="mt-1 text-xs text-slate-500">{subtitle}</p>}
-        </div>
-        <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl md:h-12 md:w-12', styles.icon)}>
-          <Icon className="h-5 w-5 md:h-6 md:w-6" />
+      <div className="flex items-start justify-between gap-2">
+        <p
+          className={cn(
+            'min-w-0 flex-1 pr-1 text-[10px] font-semibold uppercase leading-snug tracking-wide sm:text-xs md:text-sm',
+            styles.label
+          )}
+        >
+          {label}
+        </p>
+        <div
+          className={cn(
+            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 md:h-11 md:w-11',
+            styles.icon
+          )}
+        >
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
       </div>
+      <p className={cn('mt-3 text-xl font-bold leading-none tracking-tight sm:text-2xl md:text-3xl', styles.value)}>
+        {value}
+      </p>
+      {subtitle && <p className="mt-1.5 text-[11px] leading-snug text-slate-500 sm:text-xs">{subtitle}</p>}
     </motion.div>
   )
 }
