@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Flame, LogOut, Search, Filter, FileText, Calendar, MapPin, AlertCircle, BarChart3, TrendingUp, Clock, CheckCircle2 } from 'lucide-react'
-import { signOut } from 'next-auth/react'
+import { Search, FileText, Calendar, MapPin, AlertCircle, BarChart3, TrendingUp, Clock, CheckCircle2 } from 'lucide-react'
+import { DashboardShell } from '@/components/dashboard/dashboard-shell'
+import { DashboardLoadingScreen } from '@/components/dashboard/loading-screen'
 import { formatDate } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -127,63 +128,28 @@ export default function MyReportsPage() {
   const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
 
   if (status === 'loading' || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
-      </div>
-    )
+    return <DashboardLoadingScreen />
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation - Mobile Optimized */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="container mx-auto px-4 py-3 md:py-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Flame className="w-6 h-6 md:w-8 md:h-8 text-red-600" />
-                <span className="text-xl md:text-2xl font-bold text-gray-900">FireResponse</span>
-                <span className="hidden md:inline px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                  My Reports
-                </span>
-              </div>
-              <button
-                onClick={() => setShowStats(!showStats)}
-                className="md:hidden p-2 rounded-lg hover:bg-gray-100"
-              >
-                <BarChart3 className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-sm md:text-base">
-              {isAdmin && (
-                <Link
-                  href="/dashboard"
-                  className="px-3 md:px-4 py-2 text-gray-700 hover:text-red-600 transition-colors text-sm"
-                >
-                  Admin
-                </Link>
-              )}
-              <Link
-                href="/report"
-                className="px-3 md:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm md:text-base"
-              >
-                Report Incident
-              </Link>
-              <span className="hidden md:inline text-gray-700 text-sm md:text-base">{session?.user?.email}</span>
-              <button
-                onClick={() => signOut({ callbackUrl: '/' })}
-                className="flex items-center space-x-2 px-3 md:px-4 py-2 text-gray-700 hover:text-red-600 transition-colors text-sm"
-              >
-                <LogOut className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden md:inline">Sign Out</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div className="container mx-auto px-4 py-4 md:py-8">
+    <DashboardShell
+      variant="user"
+      email={session?.user?.email}
+      role={session?.user?.role}
+      title="My Reports"
+      subtitle="Track your submitted incidents and personal statistics"
+      showAdminLink={isAdmin}
+      headerActions={
+        <button
+          type="button"
+          onClick={() => setShowStats(!showStats)}
+          className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm md:hidden"
+          aria-label="Toggle statistics"
+        >
+          <BarChart3 className="h-5 w-5" />
+        </button>
+      }
+    >
         <div className="mb-4 md:mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">My Reported Incidents</h1>
           <p className="text-sm md:text-base text-gray-600">Track the status of all your fire incident reports</p>
@@ -471,7 +437,6 @@ export default function MyReportsPage() {
             })}
           </div>
         )}
-      </div>
-    </div>
+    </DashboardShell>
   )
 }

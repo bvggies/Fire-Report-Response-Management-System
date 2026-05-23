@@ -3,8 +3,36 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Flame, ArrowLeft, BarChart3, TrendingUp, AlertTriangle, Users, Clock, CheckCircle2, Activity } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
+import {
+  AlertCircle,
+  CheckCircle,
+  BarChart3,
+  TrendingUp,
+  Users,
+  Building2,
+  Clock,
+  Activity,
+} from 'lucide-react'
+import { AdminLayout } from '@/components/dashboard/admin-layout'
+import { DashboardLoadingScreen } from '@/components/dashboard/loading-screen'
+import { StatCard } from '@/components/dashboard/stat-card'
+import { SectionHeader } from '@/components/dashboard/section-header'
+import { ChartPanel, CHART_COLORS, chartTooltipStyle } from '@/components/dashboard/chart-panel'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+} from 'recharts'
 import { motion } from 'framer-motion'
 
 type Stats = {
@@ -32,23 +60,19 @@ type AdminStats = {
   resolvedCount: number
 }
 
-const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e']
-
 export default function AnalyticsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [stats, setStats] = useState<Stats | null>(null)
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const isAdmin =
+    session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
 
   const fetchStats = useCallback(async () => {
     try {
       const response = await fetch('/api/analytics')
-      if (response.ok) {
-        const data = await response.json()
-        setStats(data)
-      }
+      if (response.ok) setStats(await response.json())
     } catch (error) {
       console.error('Error fetching stats:', error)
     } finally {
@@ -59,10 +83,7 @@ export default function AnalyticsPage() {
   const fetchAdminStats = useCallback(async () => {
     try {
       const response = await fetch('/api/analytics/admin')
-      if (response.ok) {
-        const data = await response.json()
-        setAdminStats(data)
-      }
+      if (response.ok) setAdminStats(await response.json())
     } catch (error) {
       console.error('Error fetching admin stats:', error)
     } finally {
@@ -71,400 +92,240 @@ export default function AnalyticsPage() {
   }, [])
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
-    }
+    if (status === 'unauthenticated') router.push('/login')
   }, [status, router])
 
   useEffect(() => {
-    if (session) {
-      const admin = session.user?.role === 'ADMIN' || session.user?.role === 'SUPER_ADMIN'
-      setIsAdmin(admin)
-      
-      if (admin) {
-        fetchAdminStats()
-      } else {
-        fetchStats()
-      }
-    }
-  }, [session, fetchStats, fetchAdminStats])
+    if (!session) return
+    setLoading(true)
+    if (isAdmin) fetchAdminStats()
+    else fetchStats()
+  }, [session, isAdmin, fetchStats, fetchAdminStats])
 
   if (status === 'loading' || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
-      </div>
-    )
+    return <DashboardLoadingScreen />
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation - Mobile Optimized */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="container mx-auto px-4 py-3 md:py-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                  <span className="hidden md:inline">Back to Dashboard</span>
-                </button>
-                <div className="hidden md:flex items-center space-x-2">
-                  <Flame className="w-8 h-8 text-red-600" />
-                  <span className="text-2xl font-bold text-gray-900">FireResponse</span>
-                </div>
-              </div>
-            </div>
+    <AdminLayout
+      email={session?.user?.email}
+      role={session?.user?.role}
+      isSuperAdmin={session?.user?.role === 'SUPER_ADMIN'}
+      title="Analytics"
+      subtitle="Deep insights into incidents, response times, and system usage"
+    >
+      {isAdmin && adminStats && (
+        <>
+          <SectionHeader
+            label="Performance"
+            title="System analytics"
+            description="Aggregated metrics across all incidents and users"
+          />
+
+          <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <StatCard label="Total incidents" value={adminStats.totalIncidents} icon={AlertCircle} accent="red" />
+            <StatCard label="Active" value={adminStats.activeCount} icon={Activity} accent="orange" delay={0.05} />
+            <StatCard label="Resolved" value={adminStats.resolvedCount} icon={CheckCircle} accent="green" delay={0.1} />
+            <StatCard label="Users" value={adminStats.totalUsers} icon={Users} accent="blue" delay={0.15} />
+            <StatCard label="Stations" value={adminStats.totalStations} icon={Building2} accent="purple" delay={0.2} />
+            <StatCard
+              label="Resolution rate"
+              value={`${adminStats.resolutionRate}%`}
+              icon={BarChart3}
+              accent="indigo"
+              delay={0.25}
+            />
           </div>
-        </div>
-      </nav>
 
-      <div className="container mx-auto px-4 py-4 md:py-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-8 flex items-center space-x-2">
-          <BarChart3 className="w-6 h-6 md:w-8 md:h-8 text-red-600" />
-          <span>Analytics Dashboard</span>
-        </h1>
+          <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {adminStats.monthlyChart.length > 0 && (
+              <ChartPanel title="Incident trend" subtitle="Last 6 months — total vs resolved">
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={adminStats.monthlyChart}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="month" fontSize={11} stroke="#94a3b8" tickLine={false} />
+                    <YAxis fontSize={11} stroke="#94a3b8" tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={chartTooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Line type="monotone" dataKey="total" stroke="#ef4444" strokeWidth={2.5} dot={false} name="Total" />
+                    <Line type="monotone" dataKey="resolved" stroke="#22c55e" strokeWidth={2.5} dot={false} name="Resolved" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartPanel>
+            )}
+            {adminStats.bySeverity.length > 0 && (
+              <ChartPanel title="Severity distribution" subtitle="Share of incidents by severity level" delay={0.1}>
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie
+                      data={adminStats.bySeverity}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ severity, count }) => `${severity}: ${count}`}
+                      outerRadius={95}
+                      innerRadius={52}
+                      dataKey="count"
+                      paddingAngle={2}
+                    >
+                      {adminStats.bySeverity.map((_, index) => (
+                        <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={chartTooltipStyle} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartPanel>
+            )}
+          </div>
 
-        {/* Admin Analytics */}
-        {isAdmin && adminStats && (
-          <>
-            {/* Stats Cards - Mobile Responsive */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-6 mb-4 md:mb-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Total Incidents</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{adminStats.totalIncidents}</p>
-                  </div>
-                  <AlertTriangle className="w-8 h-8 md:w-12 md:h-12 text-red-600 opacity-20" />
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Active</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{adminStats.activeCount}</p>
-                  </div>
-                  <Activity className="w-8 h-8 md:w-12 md:h-12 text-orange-600 opacity-20" />
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Resolved</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{adminStats.resolvedCount}</p>
-                  </div>
-                  <CheckCircle2 className="w-8 h-8 md:w-12 md:h-12 text-green-600 opacity-20" />
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Total Users</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{adminStats.totalUsers}</p>
-                  </div>
-                  <Users className="w-8 h-8 md:w-12 md:h-12 text-blue-600 opacity-20" />
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Resolution Rate</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{adminStats.resolutionRate}%</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 md:w-12 md:h-12 text-green-600 opacity-20" />
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Recent (24h)</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{adminStats.recentIncidents}</p>
-                  </div>
-                  <Clock className="w-8 h-8 md:w-12 md:h-12 text-purple-600 opacity-20" />
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Charts - Mobile Responsive */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-8">
-              {adminStats.monthlyChart.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-                >
-                  <h2 className="text-lg md:text-xl font-bold mb-4">Incidents Trend (6 Months)</h2>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={adminStats.monthlyChart}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" fontSize={12} />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="total" stroke="#ef4444" strokeWidth={2} name="Total" />
-                      <Line type="monotone" dataKey="resolved" stroke="#22c55e" strokeWidth={2} name="Resolved" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </motion.div>
-              )}
-              {adminStats.bySeverity.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-                >
-                  <h2 className="text-lg md:text-xl font-bold mb-4">Incidents by Severity</h2>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                      <Pie
-                        data={adminStats.bySeverity}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ severity, count }) => `${severity}: ${count}`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="count"
-                      >
-                        {adminStats.bySeverity.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </motion.div>
-              )}
-            </div>
-
-            {/* Additional Admin Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-8">
-              {adminStats.byStatus.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-                >
-                  <h2 className="text-lg md:text-xl font-bold mb-4">Incidents by Status</h2>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={adminStats.byStatus}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="status" fontSize={10} />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="#ef4444" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </motion.div>
-              )}
+          <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {adminStats.byStatus.length > 0 && (
+              <ChartPanel title="Status breakdown" subtitle="Incidents grouped by current status">
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={adminStats.byStatus}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="status" fontSize={10} stroke="#94a3b8" tickLine={false} />
+                    <YAxis fontSize={11} stroke="#94a3b8" tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={chartTooltipStyle} />
+                    <Bar dataKey="count" fill="#ef4444" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartPanel>
+            )}
+            {adminStats.byRole.length > 0 && (
+              <ChartPanel title="Users by role" subtitle="Account distribution across roles" delay={0.05}>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={adminStats.byRole}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="role" fontSize={10} stroke="#94a3b8" tickLine={false} />
+                    <YAxis fontSize={11} stroke="#94a3b8" tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={chartTooltipStyle} />
+                    <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartPanel>
+            )}
+            <div className="space-y-4">
               {adminStats.avgResolutionHours > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-                >
-                  <div className="flex items-center space-x-3 mb-4">
-                    <Clock className="w-8 h-8 md:w-10 md:h-10 text-blue-600" />
-                    <div>
-                      <p className="text-sm md:text-base text-gray-600">Average Resolution Time</p>
-                      <p className="text-xl md:text-2xl font-bold text-gray-900">{adminStats.avgResolutionHours.toFixed(1)} hours</p>
-                    </div>
-                  </div>
-                </motion.div>
+                <StatCard
+                  label="Avg resolution"
+                  value={`${adminStats.avgResolutionHours.toFixed(1)}h`}
+                  icon={Clock}
+                  accent="blue"
+                  subtitle="Mean time to resolve"
+                />
               )}
+              <StatCard
+                label="Last 24 hours"
+                value={adminStats.recentIncidents}
+                icon={TrendingUp}
+                accent="green"
+                subtitle="New incidents today"
+              />
               {adminStats.topReporters.length > 0 && (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                  className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm"
                 >
-                  <h3 className="text-base md:text-lg font-semibold mb-3">Top Reporters</h3>
+                  <h3 className="mb-4 text-sm font-bold text-slate-900">Top reporters</h3>
                   <div className="space-y-2">
-                    {adminStats.topReporters.slice(0, 5).map((reporter) => (
-                      <div key={reporter.reporterId} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs md:text-sm font-medium text-gray-900 truncate">{reporter.name}</p>
-                          <p className="text-xs text-gray-500 truncate">{reporter.email}</p>
+                    {adminStats.topReporters.slice(0, 5).map((reporter, i) => (
+                      <div
+                        key={reporter.reporterId}
+                        className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5"
+                      >
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-xs font-bold text-slate-600">
+                          {i + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-slate-800">{reporter.name}</p>
+                          <p className="truncate text-xs text-slate-500">{reporter.email}</p>
                         </div>
-                        <span className="text-sm md:text-base font-semibold text-red-600 ml-2">{reporter.count}</span>
+                        <span className="text-sm font-bold text-red-600">{reporter.count}</span>
                       </div>
                     ))}
                   </div>
                 </motion.div>
               )}
             </div>
+          </div>
+        </>
+      )}
 
-            {/* User Role Distribution */}
-            {adminStats.byRole.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-8"
-              >
-                <h2 className="text-lg md:text-xl font-bold mb-4">Users by Role</h2>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={adminStats.byRole}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="role" fontSize={12} />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#6366f1" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </motion.div>
-            )}
-          </>
-        )}
+      {!isAdmin && stats && (
+        <>
+          <SectionHeader
+            label="Your activity"
+            title="Report analytics"
+            description="Statistics for all incidents in the system"
+          />
+          <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+            <StatCard label="Total" value={stats.total} icon={AlertCircle} accent="red" />
+            <StatCard label="Last 24h" value={stats.recent} icon={TrendingUp} accent="green" delay={0.05} />
+            <StatCard
+              label="Active"
+              value={stats.byStatus
+                .filter((s) => s.status !== 'RESOLVED' && s.status !== 'FALSE_ALARM')
+                .reduce((acc, s) => acc + s.count, 0)}
+              icon={Activity}
+              accent="orange"
+              delay={0.1}
+            />
+            <StatCard
+              label="Resolved"
+              value={stats.byStatus.find((s) => s.status === 'RESOLVED')?.count || 0}
+              icon={CheckCircle}
+              accent="blue"
+              delay={0.15}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <ChartPanel title="By status" subtitle="Incident count per status">
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={stats.byStatus}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="status" fontSize={11} stroke="#94a3b8" tickLine={false} />
+                  <YAxis fontSize={11} stroke="#94a3b8" tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={chartTooltipStyle} />
+                  <Bar dataKey="count" fill="#ef4444" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartPanel>
+            <ChartPanel title="By severity" subtitle="Distribution of severity levels" delay={0.1}>
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie
+                    data={stats.bySeverity}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ severity, count }) => `${severity}: ${count}`}
+                    outerRadius={88}
+                    innerRadius={48}
+                    dataKey="count"
+                    paddingAngle={2}
+                  >
+                    {stats.bySeverity.map((_, index) => (
+                      <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={chartTooltipStyle} />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartPanel>
+          </div>
+        </>
+      )}
 
-        {/* Regular User Analytics */}
-        {!isAdmin && stats && (
-          <>
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Total Incidents</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.total}</p>
-                  </div>
-                  <AlertTriangle className="w-8 h-8 md:w-12 md:h-12 text-red-600 opacity-20" />
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Recent (24h)</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">{stats.recent}</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 md:w-12 md:h-12 text-green-600 opacity-20" />
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Active</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">
-                      {stats.byStatus.filter(s => s.status !== 'RESOLVED' && s.status !== 'FALSE_ALARM').reduce((acc, s) => acc + s.count, 0)}
-                    </p>
-                  </div>
-                  <BarChart3 className="w-8 h-8 md:w-12 md:h-12 text-blue-600 opacity-20" />
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs md:text-sm text-gray-600">Resolved</p>
-                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1 md:mt-2">
-                      {stats.byStatus.find(s => s.status === 'RESOLVED')?.count || 0}
-                    </p>
-                  </div>
-                  <CheckCircle2 className="w-8 h-8 md:w-12 md:h-12 text-green-600 opacity-20" />
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <h2 className="text-lg md:text-xl font-bold mb-4">Incidents by Status</h2>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={stats.byStatus}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="status" fontSize={12} />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="count" fill="#ef4444" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow-sm p-4 md:p-6"
-              >
-                <h2 className="text-lg md:text-xl font-bold mb-4">Incidents by Severity</h2>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={stats.bySeverity}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ severity, count }) => `${severity}: ${count}`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="count"
-                    >
-                      {stats.bySeverity.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </motion.div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+      {isAdmin && !adminStats && (
+        <div className="rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50 to-orange-50 p-10 text-center">
+          <BarChart3 className="mx-auto mb-3 h-10 w-10 text-amber-600" />
+          <p className="font-semibold text-amber-950">No analytics data yet</p>
+          <p className="mt-1 text-sm text-amber-800/80">Metrics will appear once incidents are recorded.</p>
+        </div>
+      )}
+    </AdminLayout>
   )
 }

@@ -3,8 +3,15 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Flame, ArrowLeft, MapPin } from 'lucide-react'
+import Link from 'next/link'
+import { MapPin, Navigation, AlertCircle, Activity, RefreshCw, ChevronRight } from 'lucide-react'
 import { GoogleMap } from '@/components/google-map'
+import { AdminLayout } from '@/components/dashboard/admin-layout'
+import { DashboardLoadingScreen } from '@/components/dashboard/loading-screen'
+import { StatCard } from '@/components/dashboard/stat-card'
+import { SectionHeader } from '@/components/dashboard/section-header'
+import { SeverityBadge } from '@/components/dashboard/badges'
+import { cn } from '@/lib/utils'
 
 type Incident = {
   id: string
@@ -15,13 +22,23 @@ type Incident = {
   severity: string
 }
 
+const LEGEND = [
+  { severity: 'CRITICAL', color: 'bg-red-500', label: 'Critical' },
+  { severity: 'HIGH', color: 'bg-orange-500', label: 'High' },
+  { severity: 'MEDIUM', color: 'bg-amber-400', label: 'Medium' },
+  { severity: 'LOW', color: 'bg-emerald-500', label: 'Low' },
+]
+
 export default function MapPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [incidents, setIncidents] = useState<Incident[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
-  const fetchIncidents = useCallback(async () => {
+  const fetchIncidents = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
+    else setRefreshing(true)
     try {
       const response = await fetch('/api/incidents')
       if (response.ok) {
@@ -32,6 +49,7 @@ export default function MapPage() {
       console.error('Error fetching incidents:', error)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }, [])
 
@@ -44,6 +62,8 @@ export default function MapPage() {
   useEffect(() => {
     if (session) {
       fetchIncidents()
+      const interval = setInterval(() => fetchIncidents(true), 15000)
+      return () => clearInterval(interval)
     }
   }, [session, fetchIncidents])
 
@@ -58,51 +78,110 @@ export default function MapPage() {
       severity: incident.severity,
     }))
 
+  const activeCount = incidents.filter(
+    (i) => i.status !== 'RESOLVED' && i.status !== 'FALSE_ALARM'
+  ).length
+  const criticalCount = incidents.filter((i) => i.severity === 'CRITICAL').length
+  const withoutGps = incidents.length - markers.length
+  const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN'
+
   if (status === 'loading' || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
-      </div>
-    )
+    return <DashboardLoadingScreen />
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Back to Dashboard</span>
-              </button>
-              <div className="flex items-center space-x-2">
-                <Flame className="w-8 h-8 text-red-600" />
-                <span className="text-2xl font-bold text-gray-900">FireResponse</span>
-              </div>
+    <AdminLayout
+      email={session?.user?.email}
+      role={session?.user?.role}
+      isSuperAdmin={isSuperAdmin}
+      title="Live Map"
+      subtitle="Real-time geographic view of reported incidents"
+      headerActions={
+        <button
+          type="button"
+          onClick={() => fetchIncidents(true)}
+          disabled={refreshing}
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60 md:text-sm"
+        >
+          <RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />
+          <span className="hidden sm:inline">Refresh</span>
+        </button>
+      }
+    >
+      <SectionHeader
+        label="Map overview"
+        title="Incident geography"
+        description="Markers are color-coded by severity. Click an incident below for full details."
+      />
+
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label="On map" value={markers.length} icon={MapPin} accent="red" />
+        <StatCard label="Active" value={activeCount} icon={Activity} accent="orange" delay={0.05} />
+        <StatCard label="Critical" value={criticalCount} icon={AlertCircle} accent="red" delay={0.1} />
+        <StatCard
+          label="No GPS"
+          value={withoutGps}
+          icon={Navigation}
+          accent="indigo"
+          delay={0.15}
+          subtitle="Missing coordinates"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+        <div className="xl:col-span-3">
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <div className="border-b border-slate-100 px-5 py-3">
+              <p className="text-sm font-semibold text-slate-900">Interactive map</p>
+              <p className="text-xs text-slate-500">Pan and zoom to explore incident clusters</p>
             </div>
+            <GoogleMap markers={markers} height="min(70vh, 640px)" />
           </div>
         </div>
-      </nav>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h1 className="text-2xl font-bold mb-4 flex items-center space-x-2">
-            <MapPin className="w-6 h-6 text-red-600" />
-            <span>Fire Incidents Map</span>
-          </h1>
-          <p className="text-gray-600">
-            View all fire incidents on the map. Markers are color-coded by severity.
-          </p>
-        </div>
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+            <h3 className="mb-4 text-sm font-bold text-slate-900">Severity legend</h3>
+            <ul className="space-y-3">
+              {LEGEND.map((item) => (
+                <li key={item.severity} className="flex items-center gap-3 text-sm text-slate-600">
+                  <span className={cn('h-3 w-3 rounded-full ring-2 ring-white shadow', item.color)} />
+                  {item.label}
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <GoogleMap markers={markers} height="calc(100vh - 250px)" />
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+            <h3 className="mb-3 text-sm font-bold text-slate-900">Recent on map</h3>
+            {markers.length === 0 ? (
+              <p className="text-sm text-slate-500">No incidents with GPS data yet.</p>
+            ) : (
+              <ul className="max-h-80 space-y-2 overflow-y-auto">
+                {incidents
+                  .filter((i) => i.latitude && i.longitude)
+                  .slice(0, 8)
+                  .map((incident) => (
+                    <li key={incident.id}>
+                      <Link
+                        href={`/dashboard/incidents/${incident.id}`}
+                        className="flex items-start gap-2 rounded-xl bg-slate-50 p-3 transition hover:bg-slate-100"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-slate-900">{incident.location}</p>
+                          <div className="mt-1.5">
+                            <SeverityBadge severity={incident.severity} />
+                          </div>
+                        </div>
+                        <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                      </Link>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   )
 }

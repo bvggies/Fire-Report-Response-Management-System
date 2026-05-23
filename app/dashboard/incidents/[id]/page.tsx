@@ -3,9 +3,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
-import { Flame, ArrowLeft, MapPin, Clock, User, ExternalLink } from 'lucide-react'
+import { MapPin, Clock, User, ExternalLink } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import toast from 'react-hot-toast'
+import { AdminLayout, DashboardShell } from '@/components/dashboard/admin-layout'
+import { DashboardLoadingScreen } from '@/components/dashboard/loading-screen'
 
 type Incident = {
   id: string
@@ -102,13 +104,10 @@ export default function IncidentDetailPage() {
     }
   }, [incident, fetchIncident, session, router])
 
+  const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
+
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
-        <p className="ml-4 text-gray-600">Loading incident details...</p>
-      </div>
-    )
+    return <DashboardLoadingScreen />
   }
 
   if (!incident && !loading) {
@@ -129,30 +128,10 @@ export default function IncidentDetailPage() {
     return null
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back</span>
-            </button>
-            <div className="flex items-center space-x-2">
-              <Flame className="w-8 h-8 text-red-600" />
-              <span className="text-2xl font-bold text-gray-900">FireResponse</span>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold">Incident Details</h1>
+  const detailContent = (
+        <div className="mx-auto max-w-4xl rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm md:p-8">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="font-mono text-xs text-slate-400">ID: {incident.id.slice(0, 12)}…</p>
             {(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') ? (
               <select
                 value={incident.status}
@@ -321,7 +300,32 @@ export default function IncidentDetailPage() {
             )}
           </div>
         </div>
-      </div>
-    </div>
+  )
+
+  if (isAdmin) {
+    return (
+      <AdminLayout
+        email={session?.user?.email}
+        role={session?.user?.role}
+        isSuperAdmin={session?.user?.role === 'SUPER_ADMIN'}
+        title="Incident Details"
+        subtitle={incident.location}
+      >
+        {detailContent}
+      </AdminLayout>
+    )
+  }
+
+  return (
+    <DashboardShell
+      variant="user"
+      email={session?.user?.email}
+      role={session?.user?.role}
+      title="Incident Details"
+      subtitle={incident.location}
+      showAdminLink={false}
+    >
+      {detailContent}
+    </DashboardShell>
   )
 }

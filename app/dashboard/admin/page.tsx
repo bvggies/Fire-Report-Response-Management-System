@@ -3,8 +3,14 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Flame, ArrowLeft, Users, Building2, UserPlus, Plus, Download, Edit, Trash2, X, Save } from 'lucide-react'
+import { Users, Building2, UserPlus, Plus, Download, Edit, Trash2, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { AdminLayout } from '@/components/dashboard/admin-layout'
+import { DashboardLoadingScreen } from '@/components/dashboard/loading-screen'
+import { StatCard } from '@/components/dashboard/stat-card'
+import { SectionHeader } from '@/components/dashboard/section-header'
+import { Modal, inputClassName, labelClassName } from '@/components/dashboard/modal'
+import { cn } from '@/lib/utils'
 
 type User = {
   id: string
@@ -56,6 +62,20 @@ export default function AdminPanelPage() {
   const [userForm, setUserForm] = useState({ name: '', email: '', phone: '', role: 'USER', password: '' })
   const [stationForm, setStationForm] = useState({ name: '', address: '', latitude: '', longitude: '', phone: '', email: '', capacity: '10' })
   const [personnelForm, setPersonnelForm] = useState({ name: '', email: '', phone: '', badgeNumber: '', rank: '', fireStationId: '' })
+  const [summary, setSummary] = useState({ users: 0, stations: 0, personnel: 0 })
+
+  const fetchSummary = useCallback(async () => {
+    try {
+      const [u, s, p] = await Promise.all([
+        fetch('/api/admin/users').then((r) => (r.ok ? r.json() : [])),
+        fetch('/api/admin/stations').then((r) => (r.ok ? r.json() : [])),
+        fetch('/api/admin/personnel').then((r) => (r.ok ? r.json() : [])),
+      ])
+      setSummary({ users: u.length, stations: s.length, personnel: p.length })
+    } catch (error) {
+      console.error('Error fetching summary:', error)
+    }
+  }, [])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -105,8 +125,9 @@ export default function AdminPanelPage() {
   useEffect(() => {
     if (session && (session.user?.role === 'ADMIN' || session.user?.role === 'SUPER_ADMIN')) {
       fetchData()
+      fetchSummary()
     }
-  }, [session, activeTab, fetchData])
+  }, [session, activeTab, fetchData, fetchSummary])
 
   // User operations
   const handleUserSubmit = async (e: React.FormEvent) => {
@@ -127,6 +148,7 @@ export default function AdminPanelPage() {
         setEditingItem(null)
         setUserForm({ name: '', email: '', phone: '', role: 'USER', password: '' })
         fetchData()
+        fetchSummary()
       } else {
         const error = await response.json()
         toast.error(error.message || 'Failed to save user')
@@ -160,6 +182,7 @@ export default function AdminPanelPage() {
       if (response.ok) {
         toast.success('User deleted successfully')
         fetchData()
+        fetchSummary()
       } else {
         const error = await response.json()
         toast.error(error.message || 'Failed to delete user')
@@ -189,6 +212,7 @@ export default function AdminPanelPage() {
         setEditingItem(null)
         setStationForm({ name: '', address: '', latitude: '', longitude: '', phone: '', email: '', capacity: '10' })
         fetchData()
+        fetchSummary()
       } else {
         const error = await response.json()
         toast.error(error.message || 'Failed to save station')
@@ -224,6 +248,7 @@ export default function AdminPanelPage() {
       if (response.ok) {
         toast.success('Station deleted successfully')
         fetchData()
+        fetchSummary()
       } else {
         const error = await response.json()
         toast.error(error.message || 'Failed to delete station')
@@ -253,6 +278,7 @@ export default function AdminPanelPage() {
         setEditingItem(null)
         setPersonnelForm({ name: '', email: '', phone: '', badgeNumber: '', rank: '', fireStationId: '' })
         fetchData()
+        fetchSummary()
       } else {
         const error = await response.json()
         toast.error(error.message || 'Failed to save personnel')
@@ -287,6 +313,7 @@ export default function AdminPanelPage() {
       if (response.ok) {
         toast.success('Personnel deleted successfully')
         fetchData()
+        fetchSummary()
       } else {
         const error = await response.json()
         toast.error(error.message || 'Failed to delete personnel')
@@ -317,158 +344,155 @@ export default function AdminPanelPage() {
   }
 
   if (status === 'loading' || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
-      </div>
-    )
+    return <DashboardLoadingScreen />
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Back to Dashboard</span>
-              </button>
-              <div className="flex items-center space-x-2">
-                <Flame className="w-8 h-8 text-red-600" />
-                <span className="text-2xl font-bold text-gray-900">Admin Panel</span>
-              </div>
-            </div>
-            <button
-              onClick={handleExport}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <Download className="w-5 h-5" />
-              <span>Export Data</span>
-            </button>
-          </div>
-        </div>
-      </nav>
+    <AdminLayout
+      email={session?.user?.email}
+      role={session?.user?.role}
+      isSuperAdmin={session?.user?.role === 'SUPER_ADMIN'}
+      title="Admin Panel"
+      subtitle="Manage users, fire stations, and personnel"
+      headerActions={
+        <button
+          type="button"
+          onClick={handleExport}
+          className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 md:text-sm"
+        >
+          <Download className="h-4 w-4" />
+          <span className="hidden sm:inline">Export</span>
+        </button>
+      }
+    >
+      <SectionHeader
+        label="System"
+        title="System management"
+        description="Manage accounts, fire stations, and assigned personnel"
+      />
 
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">System Management</h1>
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard label="Users" value={summary.users} icon={Users} accent="blue" />
+        <StatCard label="Fire stations" value={summary.stations} icon={Building2} accent="purple" delay={0.05} />
+        <StatCard label="Personnel" value={summary.personnel} icon={UserPlus} accent="indigo" delay={0.1} />
+      </div>
 
-        {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm mb-6">
-          <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
-                activeTab === 'users'
-                  ? 'text-red-600 border-b-2 border-red-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Users className="w-5 h-5 inline-block mr-2" />
-              Users
-            </button>
-            <button
-              onClick={() => setActiveTab('stations')}
-              className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
-                activeTab === 'stations'
-                  ? 'text-red-600 border-b-2 border-red-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Building2 className="w-5 h-5 inline-block mr-2" />
-              Fire Stations
-            </button>
-            <button
-              onClick={() => setActiveTab('personnel')}
-              className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
-                activeTab === 'personnel'
-                  ? 'text-red-600 border-b-2 border-red-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <UserPlus className="w-5 h-5 inline-block mr-2" />
-              Personnel
-            </button>
-          </div>
-        </div>
+      <div className="mb-6 flex flex-wrap gap-2 rounded-2xl border border-slate-200/80 bg-white p-2 shadow-sm">
+        {(
+          [
+            { id: 'users' as const, label: 'Users', icon: Users },
+            { id: 'stations' as const, label: 'Fire stations', icon: Building2 },
+            { id: 'personnel' as const, label: 'Personnel', icon: UserPlus },
+          ] as const
+        ).map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setActiveTab(id)}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all min-w-[120px]',
+              activeTab === id
+                ? 'bg-slate-900 text-white shadow-md'
+                : 'text-slate-600 hover:bg-slate-50'
+            )}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
+      </div>
 
-        {/* Content */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-xl font-semibold">
-              {activeTab === 'users' ? 'Users' : activeTab === 'stations' ? 'Fire Stations' : 'Personnel'}
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              {activeTab === 'users' ? 'User accounts' : activeTab === 'stations' ? 'Fire stations' : 'Personnel roster'}
             </h2>
-            <button
-              onClick={() => {
-                setEditingItem(null)
-                if (activeTab === 'users') {
-                  setUserForm({ name: '', email: '', phone: '', role: 'USER', password: '' })
-                  setShowUserModal(true)
-                } else if (activeTab === 'stations') {
-                  setStationForm({ name: '', address: '', latitude: '', longitude: '', phone: '', email: '', capacity: '10' })
-                  setShowStationModal(true)
-                } else {
-                  setPersonnelForm({ name: '', email: '', phone: '', badgeNumber: '', rank: '', fireStationId: '' })
-                  setShowPersonnelModal(true)
-                }
-              }}
-              className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Add New</span>
-            </button>
+            <p className="text-sm text-slate-500">
+              {activeTab === 'users' && `${users.length} registered users`}
+              {activeTab === 'stations' && `${stations.length} stations`}
+              {activeTab === 'personnel' && `${personnel.length} personnel records`}
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setEditingItem(null)
+              if (activeTab === 'users') {
+                setUserForm({ name: '', email: '', phone: '', role: 'USER', password: '' })
+                setShowUserModal(true)
+              } else if (activeTab === 'stations') {
+                setStationForm({ name: '', address: '', latitude: '', longitude: '', phone: '', email: '', capacity: '10' })
+                setShowStationModal(true)
+              } else {
+                setPersonnelForm({ name: '', email: '', phone: '', badgeNumber: '', rank: '', fireStationId: '' })
+                setShowPersonnelModal(true)
+              }
+            }}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-500/20 hover:from-red-500 hover:to-orange-500"
+          >
+            <Plus className="h-4 w-4" />
+            Add new
+          </button>
+        </div>
 
           {activeTab === 'users' && (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/80">
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Name</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Email</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Role</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Phone</th>
+                    <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-500">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">{user.name || 'N/A'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                <tbody className="divide-y divide-slate-100">
+                  {users.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-16 text-center text-slate-500">
+                        No users yet. Add your first user account.
+                      </td>
+                    </tr>
+                  ) : (
+                  users.map((user) => (
+                    <tr key={user.id} className="transition-colors hover:bg-slate-50/80">
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{user.name || 'N/A'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-600">{user.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                          user.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-800' :
-                          user.role === 'ADMIN' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {user.role}
+                        <span className={cn(
+                          'inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ring-1',
+                          user.role === 'SUPER_ADMIN' ? 'bg-violet-500/15 text-violet-700 ring-violet-500/20' :
+                          user.role === 'ADMIN' ? 'bg-blue-500/15 text-blue-700 ring-blue-500/20' :
+                          'bg-slate-500/15 text-slate-600 ring-slate-500/20'
+                        )}>
+                          {user.role.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">{user.phone || 'N/A'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-600">{user.phone || '—'}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center justify-end gap-1">
                           <button
+                            type="button"
                             onClick={() => handleEditUser(user)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                            className="rounded-lg p-2 text-blue-600 transition hover:bg-blue-50"
                             title="Edit"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="h-4 w-4" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleDeleteUser(user.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                            className="rounded-lg p-2 text-red-600 transition hover:bg-red-50"
                             title="Delete"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  )))}
                 </tbody>
               </table>
             </div>
@@ -477,44 +501,53 @@ export default function AdminPanelPage() {
           {activeTab === 'stations' && (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Capacity</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/80">
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Name</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Address</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Phone</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Email</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Capacity</th>
+                    <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-500">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {stations.map((station) => (
-                    <tr key={station.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">{station.name}</td>
-                      <td className="px-6 py-4">{station.address}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{station.phone}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{station.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{station.capacity}</td>
+                <tbody className="divide-y divide-slate-100">
+                  {stations.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-16 text-center text-slate-500">
+                        No fire stations yet. Add your first station.
+                      </td>
+                    </tr>
+                  ) : (
+                  stations.map((station) => (
+                    <tr key={station.id} className="transition-colors hover:bg-slate-50/80">
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{station.name}</td>
+                      <td className="max-w-xs truncate px-6 py-4 text-slate-600">{station.address}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-600">{station.phone}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-600">{station.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-600">{station.capacity}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center justify-end gap-1">
                           <button
+                            type="button"
                             onClick={() => handleEditStation(station)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                            className="rounded-lg p-2 text-blue-600 transition hover:bg-blue-50"
                             title="Edit"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="h-4 w-4" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleDeleteStation(station.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                            className="rounded-lg p-2 text-red-600 transition hover:bg-red-50"
                             title="Delete"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  )))}
                 </tbody>
               </table>
             </div>
@@ -523,328 +556,199 @@ export default function AdminPanelPage() {
           {activeTab === 'personnel' && (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Badge Number</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Station</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/80">
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Name</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Badge</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Rank</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Station</th>
+                    <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">Email</th>
+                    <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-500">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {personnel.map((person) => (
-                    <tr key={person.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">{person.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{person.badgeNumber}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{person.rank}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{person.fireStation.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{person.email}</td>
+                <tbody className="divide-y divide-slate-100">
+                  {personnel.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-16 text-center text-slate-500">
+                        No personnel yet. Add team members to a station.
+                      </td>
+                    </tr>
+                  ) : (
+                  personnel.map((person) => (
+                    <tr key={person.id} className="transition-colors hover:bg-slate-50/80">
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">{person.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-slate-600">{person.badgeNumber}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-600">{person.rank}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-600">{person.fireStation.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-slate-600">{person.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center justify-end gap-1">
                           <button
+                            type="button"
                             onClick={() => handleEditPersonnel(person)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                            className="rounded-lg p-2 text-blue-600 transition hover:bg-blue-50"
                             title="Edit"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="h-4 w-4" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleDeletePersonnel(person.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                            className="rounded-lg p-2 text-red-600 transition hover:bg-red-50"
                             title="Delete"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  )))}
                 </tbody>
               </table>
             </div>
           )}
         </div>
-      </div>
 
-      {/* User Modal */}
       {showUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">{editingItem ? 'Edit User' : 'Add New User'}</h2>
-              <button onClick={() => { setShowUserModal(false); setEditingItem(null) }} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
+        <Modal
+          title={editingItem ? 'Edit user' : 'Add new user'}
+          onClose={() => { setShowUserModal(false); setEditingItem(null) }}
+        >
+          <form onSubmit={handleUserSubmit} className="space-y-4">
+            <div>
+              <label className={labelClassName}>Name</label>
+              <input type="text" value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} className={inputClassName} />
+            </div>
+            <div>
+              <label className={labelClassName}>Email *</label>
+              <input type="email" required value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} className={inputClassName} />
+            </div>
+            <div>
+              <label className={labelClassName}>Phone</label>
+              <input type="tel" value={userForm.phone} onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })} className={inputClassName} />
+            </div>
+            <div>
+              <label className={labelClassName}>Role</label>
+              <select value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value })} className={inputClassName}>
+                <option value="USER">User</option>
+                <option value="ADMIN">Admin</option>
+                {session?.user?.role === 'SUPER_ADMIN' && <option value="SUPER_ADMIN">Super Admin</option>}
+              </select>
+            </div>
+            <div>
+              <label className={labelClassName}>{editingItem ? 'New password (optional)' : 'Password *'}</label>
+              <input type="password" required={!editingItem} value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} className={inputClassName} />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => { setShowUserModal(false); setEditingItem(null) }} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                Cancel
+              </button>
+              <button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500">
+                <Save className="h-4 w-4" />
+                Save
               </button>
             </div>
-            <form onSubmit={handleUserSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
-                <input
-                  type="text"
-                  value={userForm.name}
-                  onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Email *</label>
-                <input
-                  type="email"
-                  required
-                  value={userForm.email}
-                  onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Phone</label>
-                <input
-                  type="tel"
-                  value={userForm.phone}
-                  onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Role</label>
-                <select
-                  value={userForm.role}
-                  onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                >
-                  <option value="USER">User</option>
-                  <option value="ADMIN">Admin</option>
-                  {session?.user?.role === 'SUPER_ADMIN' && (
-                    <option value="SUPER_ADMIN">Super Admin</option>
-                  )}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">{editingItem ? 'New Password (leave empty to keep current)' : 'Password *'}</label>
-                <input
-                  type="password"
-                  required={!editingItem}
-                  value={userForm.password}
-                  onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => { setShowUserModal(false); setEditingItem(null) }}
-                  className="px-4 py-2 border rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                  <Save className="w-4 h-4 inline mr-2" />
-                  Save
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
 
-      {/* Station Modal */}
       {showStationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">{editingItem ? 'Edit Station' : 'Add New Station'}</h2>
-              <button onClick={() => { setShowStationModal(false); setEditingItem(null) }} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
+        <Modal
+          title={editingItem ? 'Edit station' : 'Add fire station'}
+          onClose={() => { setShowStationModal(false); setEditingItem(null) }}
+          maxWidth="lg"
+        >
+          <form onSubmit={handleStationSubmit} className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
+            <div>
+              <label className={labelClassName}>Name *</label>
+              <input type="text" required value={stationForm.name} onChange={(e) => setStationForm({ ...stationForm, name: e.target.value })} className={inputClassName} />
+            </div>
+            <div>
+              <label className={labelClassName}>Address *</label>
+              <input type="text" required value={stationForm.address} onChange={(e) => setStationForm({ ...stationForm, address: e.target.value })} className={inputClassName} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClassName}>Latitude *</label>
+                <input type="number" step="any" required value={stationForm.latitude} onChange={(e) => setStationForm({ ...stationForm, latitude: e.target.value })} className={inputClassName} />
+              </div>
+              <div>
+                <label className={labelClassName}>Longitude *</label>
+                <input type="number" step="any" required value={stationForm.longitude} onChange={(e) => setStationForm({ ...stationForm, longitude: e.target.value })} className={inputClassName} />
+              </div>
+            </div>
+            <div>
+              <label className={labelClassName}>Phone *</label>
+              <input type="tel" required value={stationForm.phone} onChange={(e) => setStationForm({ ...stationForm, phone: e.target.value })} className={inputClassName} />
+            </div>
+            <div>
+              <label className={labelClassName}>Email *</label>
+              <input type="email" required value={stationForm.email} onChange={(e) => setStationForm({ ...stationForm, email: e.target.value })} className={inputClassName} />
+            </div>
+            <div>
+              <label className={labelClassName}>Capacity</label>
+              <input type="number" value={stationForm.capacity} onChange={(e) => setStationForm({ ...stationForm, capacity: e.target.value })} className={inputClassName} />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => { setShowStationModal(false); setEditingItem(null) }} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                Cancel
+              </button>
+              <button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500">
+                <Save className="h-4 w-4" />
+                Save
               </button>
             </div>
-            <form onSubmit={handleStationSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={stationForm.name}
-                  onChange={(e) => setStationForm({ ...stationForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Address *</label>
-                <input
-                  type="text"
-                  required
-                  value={stationForm.address}
-                  onChange={(e) => setStationForm({ ...stationForm, address: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Latitude *</label>
-                  <input
-                    type="number"
-                    step="any"
-                    required
-                    value={stationForm.latitude}
-                    onChange={(e) => setStationForm({ ...stationForm, latitude: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Longitude *</label>
-                  <input
-                    type="number"
-                    step="any"
-                    required
-                    value={stationForm.longitude}
-                    onChange={(e) => setStationForm({ ...stationForm, longitude: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Phone *</label>
-                <input
-                  type="tel"
-                  required
-                  value={stationForm.phone}
-                  onChange={(e) => setStationForm({ ...stationForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Email *</label>
-                <input
-                  type="email"
-                  required
-                  value={stationForm.email}
-                  onChange={(e) => setStationForm({ ...stationForm, email: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Capacity</label>
-                <input
-                  type="number"
-                  value={stationForm.capacity}
-                  onChange={(e) => setStationForm({ ...stationForm, capacity: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => { setShowStationModal(false); setEditingItem(null) }}
-                  className="px-4 py-2 border rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                  <Save className="w-4 h-4 inline mr-2" />
-                  Save
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
 
-      {/* Personnel Modal */}
       {showPersonnelModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">{editingItem ? 'Edit Personnel' : 'Add New Personnel'}</h2>
-              <button onClick={() => { setShowPersonnelModal(false); setEditingItem(null) }} className="text-gray-500 hover:text-gray-700">
-                <X className="w-6 h-6" />
+        <Modal
+          title={editingItem ? 'Edit personnel' : 'Add personnel'}
+          onClose={() => { setShowPersonnelModal(false); setEditingItem(null) }}
+        >
+          <form onSubmit={handlePersonnelSubmit} className="space-y-4">
+            <div>
+              <label className={labelClassName}>Name *</label>
+              <input type="text" required value={personnelForm.name} onChange={(e) => setPersonnelForm({ ...personnelForm, name: e.target.value })} className={inputClassName} />
+            </div>
+            <div>
+              <label className={labelClassName}>Email *</label>
+              <input type="email" required value={personnelForm.email} onChange={(e) => setPersonnelForm({ ...personnelForm, email: e.target.value })} className={inputClassName} />
+            </div>
+            <div>
+              <label className={labelClassName}>Phone *</label>
+              <input type="tel" required value={personnelForm.phone} onChange={(e) => setPersonnelForm({ ...personnelForm, phone: e.target.value })} className={inputClassName} />
+            </div>
+            <div>
+              <label className={labelClassName}>Badge number *</label>
+              <input type="text" required value={personnelForm.badgeNumber} onChange={(e) => setPersonnelForm({ ...personnelForm, badgeNumber: e.target.value })} className={inputClassName} />
+            </div>
+            <div>
+              <label className={labelClassName}>Rank *</label>
+              <input type="text" required value={personnelForm.rank} onChange={(e) => setPersonnelForm({ ...personnelForm, rank: e.target.value })} className={inputClassName} />
+            </div>
+            <div>
+              <label className={labelClassName}>Fire station *</label>
+              <select required value={personnelForm.fireStationId} onChange={(e) => setPersonnelForm({ ...personnelForm, fireStationId: e.target.value })} className={inputClassName}>
+                <option value="">Select a station</option>
+                {stations.map((station) => (
+                  <option key={station.id} value={station.id}>{station.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => { setShowPersonnelModal(false); setEditingItem(null) }} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                Cancel
+              </button>
+              <button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500">
+                <Save className="h-4 w-4" />
+                Save
               </button>
             </div>
-            <form onSubmit={handlePersonnelSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={personnelForm.name}
-                  onChange={(e) => setPersonnelForm({ ...personnelForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Email *</label>
-                <input
-                  type="email"
-                  required
-                  value={personnelForm.email}
-                  onChange={(e) => setPersonnelForm({ ...personnelForm, email: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Phone *</label>
-                <input
-                  type="tel"
-                  required
-                  value={personnelForm.phone}
-                  onChange={(e) => setPersonnelForm({ ...personnelForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Badge Number *</label>
-                <input
-                  type="text"
-                  required
-                  value={personnelForm.badgeNumber}
-                  onChange={(e) => setPersonnelForm({ ...personnelForm, badgeNumber: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Rank *</label>
-                <input
-                  type="text"
-                  required
-                  value={personnelForm.rank}
-                  onChange={(e) => setPersonnelForm({ ...personnelForm, rank: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Fire Station *</label>
-                <select
-                  required
-                  value={personnelForm.fireStationId}
-                  onChange={(e) => setPersonnelForm({ ...personnelForm, fireStationId: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                >
-                  <option value="">Select a station</option>
-                  {stations.map((station) => (
-                    <option key={station.id} value={station.id}>
-                      {station.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => { setShowPersonnelModal(false); setEditingItem(null) }}
-                  className="px-4 py-2 border rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                  <Save className="w-4 h-4 inline mr-2" />
-                  Save
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
-    </div>
+    </AdminLayout>
   )
 }

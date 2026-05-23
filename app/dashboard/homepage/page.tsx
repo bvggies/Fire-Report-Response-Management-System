@@ -3,8 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Flame, ArrowLeft, Save, FileText } from 'lucide-react'
+import { Save, FileText } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { AdminLayout } from '@/components/dashboard/admin-layout'
+import { DashboardLoadingScreen } from '@/components/dashboard/loading-screen'
+import { SectionHeader } from '@/components/dashboard/section-header'
+import { inputClassName, labelClassName } from '@/components/dashboard/modal'
 
 type HomePageContent = {
   key: string
@@ -95,97 +99,76 @@ export default function HomePageEditorPage() {
   }
 
   if (status === 'loading' || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
-      </div>
-    )
+    return <DashboardLoadingScreen />
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Back to Dashboard</span>
-              </button>
-              <div className="flex items-center space-x-2">
-                <Flame className="w-8 h-8 text-red-600" />
-                <span className="text-2xl font-bold text-gray-900">Edit Homepage</span>
+    <AdminLayout
+      email={session?.user?.email}
+      role={session?.user?.role}
+      isSuperAdmin={session?.user?.role === 'SUPER_ADMIN'}
+      title="Homepage Editor"
+      subtitle="Customize public landing page content"
+      headerActions={
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-red-500 disabled:opacity-50 md:text-sm"
+        >
+          <Save className="h-4 w-4" />
+          <span>{saving ? 'Saving…' : 'Save all'}</span>
+        </button>
+      }
+    >
+      <SectionHeader
+        label="Content"
+        title="Landing page blocks"
+        description="Edit hero text and feature cards shown on the public homepage"
+      />
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {Object.values(contents).map((content) => (
+          <div key={content.key} className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50">
+                <FileText className="h-4 w-4 text-red-600" />
+              </div>
+              <h2 className="text-sm font-bold text-slate-900">{content.title || content.key}</h2>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className={labelClassName}>Title (optional)</label>
+                <input
+                  type="text"
+                  value={content.title || ''}
+                  onChange={(e) => handleContentChange(content.key, 'title', e.target.value)}
+                  className={inputClassName}
+                  placeholder="Content title"
+                />
+              </div>
+              <div>
+                <label className={labelClassName}>Content</label>
+                <textarea
+                  value={content.content}
+                  onChange={(e) => handleContentChange(content.key, 'content', e.target.value)}
+                  rows={4}
+                  className={inputClassName}
+                  placeholder="Enter content…"
+                />
               </div>
             </div>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-            >
-              <Save className="w-5 h-5" />
-              <span>{saving ? 'Saving...' : 'Save All'}</span>
-            </button>
           </div>
-        </div>
-      </nav>
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h1 className="text-2xl font-bold mb-2">Homepage Content Management</h1>
-          <p className="text-gray-600">Edit the content displayed on your homepage</p>
-        </div>
-
-        <div className="space-y-6">
-          {Object.values(contents).map((content) => (
-            <div key={content.key} className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <FileText className="w-5 h-5 text-gray-400" />
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {content.title || content.key}
-                </h2>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Title (optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={content.title || ''}
-                    onChange={(e) => handleContentChange(content.key, 'title', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    placeholder="Content title"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Content
-                  </label>
-                  <textarea
-                    value={content.content}
-                    onChange={(e) => handleContentChange(content.key, 'content', e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    placeholder="Enter content..."
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {Object.keys(contents).length === 0 && (
-            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 text-center">
-              <p className="text-yellow-800">No homepage content found. Click "Save All" to initialize default content.</p>
-            </div>
-          )}
-        </div>
+        ))}
       </div>
-    </div>
+
+      {Object.keys(contents).length === 0 && (
+        <div className="mt-6 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50 to-orange-50 p-8 text-center">
+          <p className="font-semibold text-amber-950">No content blocks yet</p>
+          <p className="mt-1 text-sm text-amber-800/80">Click Save all to initialize default homepage content.</p>
+        </div>
+      )}
+    </AdminLayout>
   )
 }
 

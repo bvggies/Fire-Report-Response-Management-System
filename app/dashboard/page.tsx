@@ -3,12 +3,15 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Flame, LogOut, Map, Filter, Search, AlertCircle, CheckCircle, BarChart3, TrendingUp, Users, Building2, Clock, Volume2, VolumeX, MapPin, ExternalLink } from 'lucide-react'
-import { signOut } from 'next-auth/react'
+import { Search, AlertCircle, CheckCircle, BarChart3, TrendingUp, Users, Building2, Clock, MapPin, ChevronRight, Activity } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
+import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
+import { AdminLayout, DashboardShell } from '@/components/dashboard/admin-layout'
+import { DashboardLoadingScreen } from '@/components/dashboard/loading-screen'
+import { StatCard } from '@/components/dashboard/stat-card'
+import { SeverityBadge, StatusBadge } from '@/components/dashboard/badges'
 
 type Incident = {
   id: string
@@ -43,7 +46,14 @@ type AdminStats = {
   resolvedCount: number
 }
 
-const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e']
+const CHART_COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e']
+
+const chartTooltipStyle = {
+  borderRadius: 12,
+  border: '1px solid #e2e8f0',
+  boxShadow: '0 10px 40px -10px rgba(15, 23, 42, 0.15)',
+  fontSize: 13,
+}
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -282,229 +292,81 @@ export default function DashboardPage() {
   const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN'
 
   if (status === 'loading' || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
-      </div>
-    )
+    return <DashboardLoadingScreen />
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation - Mobile Optimized */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="container mx-auto px-4 py-3 md:py-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Flame className="w-6 h-6 md:w-8 md:h-8 text-red-600" />
-                <span className="text-xl md:text-2xl font-bold text-gray-900">FireResponse</span>
-                <span className={`hidden md:inline px-3 py-1 text-sm font-medium rounded-full ${
-                  isAdmin ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
-                }`}>
-                  {isAdmin ? 'Admin Dashboard' : 'User Dashboard'}
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-sm md:text-base">
-              {session?.user?.role === 'USER' && (
-                <button
-                  onClick={() => router.push('/dashboard/my-reports')}
-                  className="px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-                >
-                  My Reports
-                </button>
-              )}
-              {isAdmin && (
-                <>
-                  <button
-                    onClick={() => router.push('/dashboard/map')}
-                    className="hidden md:flex items-center space-x-2 px-3 md:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
-                  >
-                    <Map className="w-4 h-4 md:w-5 md:h-5" />
-                    <span>Map</span>
-                  </button>
-                  <button
-                    onClick={() => router.push('/dashboard/analytics')}
-                    className="hidden md:flex items-center space-x-2 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                  >
-                    <span>Analytics</span>
-                  </button>
-                </>
-              )}
-              {(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') && (
-                <>
-                  <button
-                    onClick={() => router.push('/dashboard/admin')}
-                    className="px-3 md:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
-                  >
-                    Admin Panel
-                  </button>
-                  <button
-                    onClick={() => router.push('/dashboard/homepage')}
-                    className="px-3 md:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
-                  >
-                    Edit Homepage
-                  </button>
-                </>
-              )}
-              {isAdmin && (
-                <button
-                  onClick={() => setBeepEnabled(!beepEnabled)}
-                  className={`flex items-center space-x-2 px-3 md:px-4 py-2 rounded-lg transition-colors text-sm ${
-                    beepEnabled
-                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  title={beepEnabled ? 'Disable beep notifications' : 'Enable beep notifications'}
-                >
-                  {beepEnabled ? (
-                    <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
-                  ) : (
-                    <VolumeX className="w-4 h-4 md:w-5 md:h-5" />
-                  )}
-                  <span className="hidden md:inline">{beepEnabled ? 'Sound On' : 'Sound Off'}</span>
-                </button>
-              )}
-              <span className="hidden md:inline text-gray-700 text-sm">{session?.user?.email}</span>
-              <button
-                onClick={() => signOut({ callbackUrl: '/' })}
-                className="flex items-center space-x-2 px-3 md:px-4 py-2 text-gray-700 hover:text-red-600 transition-colors text-sm"
-              >
-                <LogOut className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden md:inline">Sign Out</span>
-              </button>
-            </div>
+  const dashboardContent = (
+    <>
+        {isAdmin && statsLoading && (
+          <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-200/80" />
+            ))}
           </div>
-        </div>
-      </nav>
+        )}
 
-      <div className="container mx-auto px-4 py-4 md:py-8">
-        {/* Admin Statistics Cards - Always visible when data is available */}
         {isAdmin && !statsLoading && (
           <>
             {stats ? (
               <>
-                <div className="mb-4 md:mb-6">
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Dashboard Analytics</h2>
-                  <p className="text-gray-600">Real-time statistics and insights</p>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-6 mb-4 md:mb-6">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-red-200"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs md:text-sm text-red-700 font-medium">Total Incidents</p>
-                        <p className="text-2xl md:text-4xl font-bold text-red-900 mt-1 md:mt-2">{stats.totalIncidents ?? 0}</p>
-                      </div>
-                      <AlertCircle className="w-10 h-10 md:w-14 md:h-14 text-red-600 opacity-40" />
-                    </div>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-orange-200"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs md:text-sm text-orange-700 font-medium">Active</p>
-                        <p className="text-2xl md:text-4xl font-bold text-orange-900 mt-1 md:mt-2">{stats.activeCount ?? 0}</p>
-                      </div>
-                      <TrendingUp className="w-10 h-10 md:w-14 md:h-14 text-orange-600 opacity-40" />
-                    </div>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-green-200"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs md:text-sm text-green-700 font-medium">Resolved</p>
-                        <p className="text-2xl md:text-4xl font-bold text-green-900 mt-1 md:mt-2">{stats.resolvedCount ?? 0}</p>
-                      </div>
-                      <CheckCircle className="w-10 h-10 md:w-14 md:h-14 text-green-600 opacity-40" />
-                    </div>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-blue-200"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs md:text-sm text-blue-700 font-medium">Total Users</p>
-                        <p className="text-2xl md:text-4xl font-bold text-blue-900 mt-1 md:mt-2">{stats.totalUsers ?? 0}</p>
-                      </div>
-                      <Users className="w-10 h-10 md:w-14 md:h-14 text-blue-600 opacity-40" />
-                    </div>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-purple-200"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs md:text-sm text-purple-700 font-medium">Stations</p>
-                        <p className="text-2xl md:text-4xl font-bold text-purple-900 mt-1 md:mt-2">{stats.totalStations ?? 0}</p>
-                      </div>
-                      <Building2 className="w-10 h-10 md:w-14 md:h-14 text-purple-600 opacity-40" />
-                    </div>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-indigo-200"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs md:text-sm text-indigo-700 font-medium">Resolution Rate</p>
-                        <p className="text-2xl md:text-4xl font-bold text-indigo-900 mt-1 md:mt-2">{stats.resolutionRate ?? 0}%</p>
-                      </div>
-                      <BarChart3 className="w-10 h-10 md:w-14 md:h-14 text-indigo-600 opacity-40" />
-                    </div>
-                  </motion.div>
+                <div className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-red-600">Overview</p>
+                    <h2 className="text-xl font-bold tracking-tight text-slate-900 md:text-2xl">
+                      Response metrics
+                    </h2>
+                  </div>
+                  <p className="text-sm text-slate-500">
+                    {filteredIncidents.length} incident{filteredIncidents.length !== 1 ? 's' : ''} shown
+                  </p>
                 </div>
 
-                {/* Admin Charts */}
+                <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+                  <StatCard label="Total incidents" value={stats.totalIncidents ?? 0} icon={AlertCircle} accent="red" />
+                  <StatCard label="Active" value={stats.activeCount ?? 0} icon={Activity} accent="orange" delay={0.05} />
+                  <StatCard label="Resolved" value={stats.resolvedCount ?? 0} icon={CheckCircle} accent="green" delay={0.1} />
+                  <StatCard label="Users" value={stats.totalUsers ?? 0} icon={Users} accent="blue" delay={0.15} />
+                  <StatCard label="Stations" value={stats.totalStations ?? 0} icon={Building2} accent="purple" delay={0.2} />
+                  <StatCard
+                    label="Resolution rate"
+                    value={`${stats.resolutionRate ?? 0}%`}
+                    icon={BarChart3}
+                    accent="indigo"
+                    delay={0.25}
+                  />
+                </div>
+
                 {stats.monthlyChart && stats.monthlyChart.length > 0 && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
+                  <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
                     <motion.div
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-white rounded-lg shadow-sm p-4 md:p-6"
+                      className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm md:p-6"
                     >
-                      <h2 className="text-lg md:text-xl font-bold mb-4">Incidents Trend (6 Months)</h2>
-                      <ResponsiveContainer width="100%" height={250}>
+                      <h3 className="mb-1 text-sm font-bold text-slate-900">Incident trend</h3>
+                      <p className="mb-4 text-xs text-slate-500">Last 6 months — total vs resolved</p>
+                      <ResponsiveContainer width="100%" height={260}>
                         <LineChart data={stats.monthlyChart}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="month" fontSize={12} />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Line type="monotone" dataKey="total" stroke="#ef4444" strokeWidth={2} name="Total" />
-                          <Line type="monotone" dataKey="resolved" stroke="#22c55e" strokeWidth={2} name="Resolved" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                          <XAxis dataKey="month" fontSize={11} stroke="#94a3b8" tickLine={false} />
+                          <YAxis fontSize={11} stroke="#94a3b8" tickLine={false} axisLine={false} />
+                          <Tooltip contentStyle={chartTooltipStyle} />
+                          <Legend wrapperStyle={{ fontSize: 12 }} />
+                          <Line type="monotone" dataKey="total" stroke="#ef4444" strokeWidth={2.5} dot={false} name="Total" />
+                          <Line type="monotone" dataKey="resolved" stroke="#22c55e" strokeWidth={2.5} dot={false} name="Resolved" />
                         </LineChart>
                       </ResponsiveContainer>
                     </motion.div>
                     {stats.bySeverity && stats.bySeverity.length > 0 && (
                       <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-lg shadow-md p-4 md:p-6 border border-gray-200"
+                        transition={{ delay: 0.1 }}
+                        className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm md:p-6"
                       >
-                        <h2 className="text-lg md:text-xl font-bold mb-4">🎯 Incidents by Severity</h2>
-                        <ResponsiveContainer width="100%" height={250}>
+                        <h3 className="mb-1 text-sm font-bold text-slate-900">Severity distribution</h3>
+                        <p className="mb-4 text-xs text-slate-500">Breakdown of all reported incidents</p>
+                        <ResponsiveContainer width="100%" height={260}>
                           <PieChart>
                             <Pie
                               data={stats.bySeverity}
@@ -512,15 +374,17 @@ export default function DashboardPage() {
                               cy="50%"
                               labelLine={false}
                               label={({ severity, count }) => `${severity}: ${count}`}
-                              outerRadius={80}
+                              outerRadius={88}
+                              innerRadius={48}
                               fill="#8884d8"
                               dataKey="count"
+                              paddingAngle={2}
                             >
                               {stats.bySeverity.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                               ))}
                             </Pie>
-                            <Tooltip />
+                            <Tooltip contentStyle={chartTooltipStyle} />
                           </PieChart>
                         </ResponsiveContainer>
                       </motion.div>
@@ -528,93 +392,83 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* Additional Admin Stats */}
                 {(stats.avgResolutionHours > 0 || (stats.topReporters && stats.topReporters.length > 0) || stats.recentIncidents > 0) && (
-                  <>
-                    <div className="mb-3 md:mb-4">
-                      <h3 className="text-lg md:text-xl font-bold text-gray-900">📋 Performance Metrics</h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
-                      {stats.avgResolutionHours > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-blue-200"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <Clock className="w-10 h-10 md:w-12 md:h-12 text-blue-600" />
-                            <div>
-                              <p className="text-sm md:text-base text-blue-700 font-medium">Avg Resolution Time</p>
-                              <p className="text-2xl md:text-3xl font-bold text-blue-900">{stats.avgResolutionHours.toFixed(1)}h</p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                      {stats.topReporters && stats.topReporters.length > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="bg-white rounded-lg shadow-md p-4 md:p-6 border border-gray-200"
-                        >
-                          <h3 className="text-base md:text-lg font-semibold mb-3 text-gray-900">🏆 Top Reporters</h3>
-                          <div className="space-y-2">
-                            {stats.topReporters.slice(0, 3).map((reporter) => (
-                              <div key={reporter.reporterId} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                <div className="flex-1 min-w-0">
-                                  <span className="text-xs md:text-sm text-gray-700 font-medium truncate block">{reporter.name}</span>
-                                  <span className="text-xs text-gray-500 truncate block">{reporter.email}</span>
-                                </div>
-                                <span className="text-sm md:text-base font-bold text-red-600 ml-2">{reporter.count}</span>
+                  <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    {stats.avgResolutionHours > 0 && (
+                      <StatCard
+                        label="Avg resolution"
+                        value={`${stats.avgResolutionHours.toFixed(1)}h`}
+                        icon={Clock}
+                        accent="blue"
+                        subtitle="Mean time to resolve"
+                      />
+                    )}
+                    {stats.recentIncidents > 0 && (
+                      <StatCard
+                        label="Last 24 hours"
+                        value={stats.recentIncidents}
+                        icon={TrendingUp}
+                        accent="green"
+                        subtitle="New incidents today"
+                      />
+                    )}
+                    {stats.topReporters && stats.topReporters.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm md:p-6 md:col-span-1"
+                      >
+                        <h3 className="mb-4 text-sm font-bold text-slate-900">Top reporters</h3>
+                        <div className="space-y-2">
+                          {stats.topReporters.slice(0, 3).map((reporter, i) => (
+                            <div
+                              key={reporter.reporterId}
+                              className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5"
+                            >
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-200 text-xs font-bold text-slate-600">
+                                {i + 1}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium text-slate-800">{reporter.name}</p>
+                                <p className="truncate text-xs text-slate-500">{reporter.email}</p>
                               </div>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                      {stats.recentIncidents > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-md p-4 md:p-6 border-2 border-green-200"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <TrendingUp className="w-10 h-10 md:w-12 md:h-12 text-green-600" />
-                            <div>
-                              <p className="text-sm md:text-base text-green-700 font-medium">Recent (24h)</p>
-                              <p className="text-2xl md:text-3xl font-bold text-green-900">{stats.recentIncidents}</p>
+                              <span className="text-sm font-bold text-red-600">{reporter.count}</span>
                             </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-                  </>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
                 )}
               </>
             ) : (
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-6 md:p-8 mb-4 md:mb-6 text-center">
-                <div className="text-4xl mb-3">📊</div>
-                <p className="text-base md:text-lg font-semibold text-yellow-900 mb-2">No Statistics Available Yet</p>
-                <p className="text-sm md:text-base text-yellow-800">
-                  Statistics and analytics will appear here once incidents are reported in the system.
+              <div className="mb-8 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50 to-orange-50 p-8 text-center">
+                <BarChart3 className="mx-auto mb-3 h-10 w-10 text-amber-600" />
+                <p className="font-semibold text-amber-950">No statistics yet</p>
+                <p className="mt-1 text-sm text-amber-800/80">
+                  Metrics will appear once incidents are reported.
                 </p>
               </div>
             )}
           </>
         )}
 
-        {/* Filters - Mobile Optimized */}
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6">
-          <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search incidents..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 md:pl-10 pr-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                />
-              </div>
+        <div className="mb-6">
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Incidents</p>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900">Active queue</h2>
+        </div>
+
+        <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm md:p-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by location, description, or ID…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-red-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20"
+              />
             </div>
             <select
               value={statusFilter}
@@ -622,9 +476,9 @@ export default function DashboardPage() {
                 setStatusFilter(e.target.value)
                 setLoading(true)
               }}
-              className="px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-700 focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500/20"
             >
-              <option value="">All Statuses</option>
+              <option value="">All statuses</option>
               <option value="RECEIVED">Received</option>
               <option value="DISPATCHED">Dispatched</option>
               <option value="ON_WAY">On the Way</option>
@@ -638,61 +492,111 @@ export default function DashboardPage() {
                 setSeverityFilter(e.target.value)
                 setLoading(true)
               }}
-              className="px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm text-slate-700 focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500/20"
             >
-              <option value="">All Severities</option>
+              <option value="">All severities</option>
               <option value="LOW">Low</option>
               <option value="MEDIUM">Medium</option>
               <option value="HIGH">High</option>
               <option value="CRITICAL">Critical</option>
             </select>
-            {isAdmin && (
-              <>
-                <button
-                  onClick={() => router.push('/dashboard/map')}
-                  className="hidden lg:flex items-center space-x-2 px-3 md:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
-                >
-                  <Map className="w-4 h-4 md:w-5 md:h-5" />
-                  <span>Map</span>
-                </button>
-                <button
-                  onClick={() => router.push('/dashboard/analytics')}
-                  className="hidden lg:flex items-center space-x-2 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                >
-                  <span>Analytics</span>
-                </button>
-              </>
-            )}
           </div>
         </div>
 
-        {/* Incidents List - Mobile Optimized */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        {/* Mobile cards */}
+        <div className="space-y-3 md:hidden">
+          {filteredIncidents.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-white py-12 text-center text-slate-500">
+              No incidents found
+            </div>
+          ) : (
+            filteredIncidents.map((incident) => (
+              <motion.div
+                key={incident.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
+              >
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-slate-900">{incident.location}</p>
+                    <p className="mt-1 line-clamp-2 text-xs text-slate-500">{incident.description}</p>
+                  </div>
+                  <SeverityBadge severity={incident.severity} />
+                </div>
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  {isAdmin ? (
+                    <select
+                      value={incident.status}
+                      onChange={(e) => updateStatus(incident.id, e.target.value)}
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700"
+                    >
+                      <option value="RECEIVED">Received</option>
+                      <option value="DISPATCHED">Dispatched</option>
+                      <option value="ON_WAY">On the Way</option>
+                      <option value="ARRIVED">Arrived</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                      <option value="RESOLVED">Resolved</option>
+                      <option value="FALSE_ALARM">False Alarm</option>
+                    </select>
+                  ) : (
+                    <StatusBadge status={incident.status} />
+                  )}
+                </div>
+                <p className="mb-3 text-xs text-slate-400">{formatDate(incident.createdAt)}</p>
+                <div className="flex items-center gap-2">
+                  {isAdmin && incident.latitude && incident.longitude && (
+                    <a
+                      href={`https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700"
+                    >
+                      <MapPin className="h-3.5 w-3.5" />
+                      Map
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/dashboard/incidents/${incident.id}`)}
+                    className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-red-600"
+                  >
+                    Details
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </motion.div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm md:block">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 hidden md:table-header-group">
-                <tr>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/80">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">
                     Location
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">
                     Status
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">
                     Severity
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500">
                     Reported
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-500">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-100">
                 {filteredIncidents.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 md:px-6 py-12 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-16 text-center text-slate-500">
                       No incidents found
                     </td>
                   </tr>
@@ -702,39 +606,18 @@ export default function DashboardPage() {
                       key={incident.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="hover:bg-gray-50"
+                      className="group transition-colors hover:bg-slate-50/80"
                     >
-                      <td className="px-4 md:px-6 py-4">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900">{incident.location}</div>
-                            <div className="text-xs md:text-sm text-gray-500 truncate max-w-xs">{incident.description}</div>
-                            <div className="md:hidden mt-2 text-xs text-gray-500">
-                              Reported: {formatDate(incident.createdAt)}
-                            </div>
-                          </div>
-                          {isAdmin && incident.latitude && incident.longitude && (
-                            <a
-                              href={`https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 font-medium text-xs whitespace-nowrap ml-2 p-1 hover:bg-blue-50 rounded"
-                              title="Open in Google Maps"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MapPin className="w-3 h-3 md:w-4 md:h-4" />
-                              <span className="hidden md:inline">Map</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          )}
-                        </div>
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-slate-900">{incident.location}</p>
+                        <p className="mt-0.5 max-w-md truncate text-sm text-slate-500">{incident.description}</p>
                       </td>
-                      <td className="px-4 md:px-6 py-4">
+                      <td className="px-6 py-4">
                         {isAdmin ? (
                           <select
                             value={incident.status}
                             onChange={(e) => updateStatus(incident.id, e.target.value)}
-                            className="px-2 md:px-3 py-1 text-xs md:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500/20"
                           >
                             <option value="RECEIVED">Received</option>
                             <option value="DISPATCHED">Dispatched</option>
@@ -745,48 +628,36 @@ export default function DashboardPage() {
                             <option value="FALSE_ALARM">False Alarm</option>
                           </select>
                         ) : (
-                          <span className={`px-2 md:px-3 py-1 text-xs font-medium rounded-full ${
-                            incident.status === 'RESOLVED' ? 'bg-green-100 text-green-800' :
-                            incident.status === 'IN_PROGRESS' || incident.status === 'ON_WAY' ? 'bg-blue-100 text-blue-800' :
-                            'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {incident.status.replace('_', ' ')}
-                          </span>
+                          <StatusBadge status={incident.status} />
                         )}
                       </td>
-                      <td className="px-4 md:px-6 py-4">
-                        <span className={`px-2 md:px-3 py-1 text-xs font-medium rounded-full ${
-                          incident.severity === 'CRITICAL' ? 'bg-red-100 text-red-800' :
-                          incident.severity === 'HIGH' ? 'bg-orange-100 text-orange-800' :
-                          incident.severity === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                          {incident.severity}
-                        </span>
+                      <td className="px-6 py-4">
+                        <SeverityBadge severity={incident.severity} />
                       </td>
-                      <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
                         {formatDate(incident.createdAt)}
                       </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex items-center space-x-3">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
                           {isAdmin && incident.latitude && incident.longitude && (
                             <a
                               href={`https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 font-medium text-xs md:text-sm"
-                              title="Open location in Google Maps"
+                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <MapPin className="w-4 h-4" />
-                              <span className="hidden md:inline">Map</span>
+                              <MapPin className="h-3.5 w-3.5" />
+                              Map
                             </a>
                           )}
                           <button
+                            type="button"
                             onClick={() => router.push(`/dashboard/incidents/${incident.id}`)}
-                            className="text-red-600 hover:text-red-700 font-medium text-xs md:text-sm"
+                            className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
                           >
-                            View Details
+                            View
+                            <ChevronRight className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </td>
@@ -797,7 +668,34 @@ export default function DashboardPage() {
             </table>
           </div>
         </div>
-      </div>
-    </div>
+    </>
+  )
+
+  if (isAdmin) {
+    return (
+      <AdminLayout
+        email={session?.user?.email}
+        role={session?.user?.role}
+        isSuperAdmin={session?.user?.role === 'SUPER_ADMIN'}
+        beepEnabled={beepEnabled}
+        onToggleBeep={() => setBeepEnabled(!beepEnabled)}
+        activeCount={stats?.activeCount ?? 0}
+      >
+        {dashboardContent}
+      </AdminLayout>
+    )
+  }
+
+  return (
+    <DashboardShell
+      variant="user"
+      email={session?.user?.email}
+      role={session?.user?.role}
+      title="My Dashboard"
+      subtitle="View and track your submitted fire reports"
+      showAdminLink={isAdmin}
+    >
+      {dashboardContent}
+    </DashboardShell>
   )
 }
