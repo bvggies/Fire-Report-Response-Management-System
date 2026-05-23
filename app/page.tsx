@@ -125,12 +125,20 @@ export default function HomePage() {
         <section className="container mx-auto px-4 py-8 md:py-12">
           <div className="bg-red-600 rounded-xl md:rounded-2xl p-6 md:p-8 text-center text-white shadow-2xl max-w-4xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">Emergency Hotline</h2>
-            <a
-              href="tel:911"
-              className="text-3xl md:text-4xl lg:text-5xl font-bold hover:text-red-200 transition-colors block"
-            >
-              911
-            </a>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-12">
+              <a
+                href="tel:112"
+                className="text-3xl md:text-4xl lg:text-5xl font-bold hover:text-red-200 transition-colors"
+              >
+                112
+              </a>
+              <a
+                href="tel:192"
+                className="text-3xl md:text-4xl lg:text-5xl font-bold hover:text-red-200 transition-colors"
+              >
+                192
+              </a>
+            </div>
             <p className="mt-3 md:mt-4 text-base md:text-xl">Call immediately for life-threatening emergencies</p>
           </div>
         </section>

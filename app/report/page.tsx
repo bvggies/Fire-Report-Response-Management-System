@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Camera, Video, Send, AlertCircle } from 'lucide-react'
+import { MapPin, Camera, Video, Send, AlertCircle, CheckCircle } from 'lucide-react'
 import { BackgroundVectors } from '@/components/background-vectors'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
@@ -36,6 +36,8 @@ export default function ReportPage() {
   const [photos, setPhotos] = useState<string[]>([])
   const [videos, setVideos] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [submittedIncidentId, setSubmittedIncidentId] = useState<string | null>(null)
 
   const {
     register,
@@ -127,6 +129,16 @@ export default function ReportPage() {
     reader.readAsDataURL(file)
   }
 
+  const handleSuccessContinue = () => {
+    setShowSuccessModal(false)
+    if (!submittedIncidentId) return
+    if (session?.user?.role === 'USER') {
+      router.push('/dashboard/my-reports')
+    } else {
+      router.push(`/track?id=${submittedIncidentId}`)
+    }
+  }
+
   const onSubmit = async (data: ReportForm) => {
     setIsSubmitting(true)
     
@@ -190,23 +202,9 @@ export default function ReportPage() {
         return
       }
       
-      // Show success message
-      toast.success(
-        `Report submitted successfully! Incident ID: ${incidentId.slice(0, 8)}... Redirecting...`,
-        { duration: 2000 }
-      )
-      
-      // Redirect based on user role
-      setTimeout(() => {
-        setIsSubmitting(false)
-        if (session?.user?.role === 'USER') {
-          // Redirect logged-in users to their reports page
-          router.push('/dashboard/my-reports')
-        } else {
-          // Redirect guests to track page
-          router.push(`/track?id=${incidentId}`)
-        }
-      }, 2000)
+      setIsSubmitting(false)
+      setSubmittedIncidentId(incidentId)
+      setShowSuccessModal(true)
       
     } catch (error: any) {
       setIsSubmitting(false)
@@ -226,6 +224,45 @@ export default function ReportPage() {
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50">
       <BackgroundVectors />
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-md w-full text-center"
+            role="dialog"
+            aria-labelledby="report-success-title"
+            aria-modal="true"
+          >
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle className="w-10 h-10 text-green-600" />
+            </div>
+            <h2 id="report-success-title" className="text-2xl font-bold text-gray-900 mb-2">
+              We&apos;re on our way!
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Your report has been received. Our response team will get there soon. Please stay safe.
+            </p>
+            {submittedIncidentId && (
+              <p className="text-sm text-gray-500 mb-6">
+                Reference ID:{' '}
+                <span className="font-mono font-semibold text-gray-700">
+                  {submittedIncidentId.slice(0, 8)}...
+                </span>
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={handleSuccessContinue}
+              className="w-full py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+            >
+              Continue
+            </button>
+          </motion.div>
+        </div>
+      )}
       
       <div className="relative z-10">
         {/* Navigation - Mobile Optimized */}
